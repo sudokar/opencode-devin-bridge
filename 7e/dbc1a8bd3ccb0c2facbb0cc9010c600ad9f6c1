@@ -1,0 +1,67 @@
+src/oauth/login.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 79,471
+src/oauth/storage.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 4,6,34,187,201,204
+install.sh
+  s_7e7c2ad9662ffb::t_d97e9efc035431 61
+  s_d2d8a717289afe::t_17d51fe31b4cbf 6-8,64,762
+  s_7e7c2ad9662ffb::t_195a4234b00a0b 3,16,78,91,408,411,414,589-591
+README.md
+  s_7e7c2ad9662ffb::t_195a4234b00a0b 1,3-5,40,134-136,141,170,196,202,212,231
+  s_d2d8a717289afe::t_17d51fe31b4cbf 15,30,230
+docs/CLOUD_DIRECT.md
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 269
+src/oauth/types.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 44
+scripts/sync-models.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 39,85
+docs/OAUTH.md
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 3,13,31,209
+package.json
+  s_d2d8a717289afe::t_04777f86b9a645 3
+  s_d2d8a717289afe::t_17d51fe31b4cbf 7,9,11
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 2,23
+src/plugin.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 38,45,648,661,919,1161,1217,1304,1365
+  s_d2d8a717289afe::t_17d51fe31b4cbf 1327
+src/constants.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 184
+.github/workflows/publish.yml
+  s_7e7c2ad9662ffb::t_195a4234b00a0b 9,26,28,99-100,132,139,144,152-153
+opencode_config_example.json
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 4
+src/cli.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 3,116,119-122,184
+src/plugin/credentials-resolver.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 12,100
+src/debug-auth.ts
+  s_d2d8a717289afe::t_8279eb6764c075 60
+AGENTS.md
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 25,30
+index.ts
+  s_7e7c2ad9662ffb::t_bae2cc33a02d4c 2,35,41,43,45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7edbc1a8bd3ccb0c2facbb0cc9010c600ad9f6c1",
+  "prompts": {},
+  "sessions": {
+    "s_7e7c2ad9662ffb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f73647575ffeieWLIogU8ThVCg",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_d2d8a717289afe": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f7364b50affeY5oftDMDUd9zWX",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    }
+  }
+}
