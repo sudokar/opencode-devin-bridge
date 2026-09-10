@@ -1,0 +1,45 @@
+.opencode/skills/openspec-plus-spec/SKILL.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-345
+openspec/.plus/config.yaml
+  s_d2d8a717289afe::t_252b42107e67f8 1-28
+.opencode/skills/openspec-plus-apply/final-review-prompt.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-159
+.opencode/skills/openspec-plus-design/SKILL.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-364
+openspec/.plus/VERSION
+  s_d2d8a717289afe::t_252b42107e67f8 1
+.opencode/skills/openspec-plus-proposal/SKILL.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-220
+.opencode/skills/openspec-plus-apply/code-quality-reviewer-prompt.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-184
+.opencode/skills/openspec-plus-tasks/SKILL.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-248
+.opencode/skills/openspec-plus-tdd/SKILL.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-377
+openspec/config.yaml
+  s_d2d8a717289afe::t_d81215f34b6d50 22-34
+  s_d2d8a717289afe::t_7009b442c6e0a6 19-21
+  s_d2d8a717289afe::t_4c345292e4fb6a 35-37
+.opencode/skills/openspec-plus-apply/spec-compliance-reviewer-prompt.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-228
+.opencode/skills/openspec-plus-apply/implementer-prompt.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-270
+.opencode/skills/openspec-plus-apply/SKILL.md
+  s_d2d8a717289afe::t_252b42107e67f8 1-567
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "fcd446f5793b39b1529f1212318c3e0e2479994b",
+  "prompts": {},
+  "sessions": {
+    "s_d2d8a717289afe": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f7364b50affeY5oftDMDUd9zWX",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    }
+  }
+}
