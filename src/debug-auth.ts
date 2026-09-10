@@ -57,7 +57,7 @@ function mask(s: string) {
 }
 
 async function main() {
-    console.log("--- Windsurf Auth Debug ---");
+    console.log("--- Devin Auth Debug ---");
 
     // 1. Check Process
     try {

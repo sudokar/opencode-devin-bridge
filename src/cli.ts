@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * opencode-windsurf-auth CLI entry point.
+ * opencode-devin-auth CLI entry point.
  *
  * Subcommands:
  *   login [--manual] [--signup] [--email <addr>] [--portal-url <https://...>]
@@ -113,13 +113,13 @@ function regionFromArgs(args: ParsedArgs): WindsurfRegion {
 
 function usage(): string {
   return `\
-opencode-windsurf-auth — Windsurf OAuth login for the opencode plugin
+  opencode-devin-auth — Windsurf OAuth login for the opencode plugin
 
 Usage:
-  opencode-windsurf-auth login [--manual] [--signup] [--email <addr>] [--portal-url <url>]
-  opencode-windsurf-auth logout
-  opencode-windsurf-auth whoami
-  opencode-windsurf-auth status
+  opencode-devin-auth login [--manual] [--signup] [--email <addr>] [--portal-url <url>]
+  opencode-devin-auth logout
+  opencode-devin-auth whoami
+  opencode-devin-auth status
 
 Login options:
   --manual              Force manual-paste flow (no localhost callback).
@@ -181,7 +181,7 @@ function cmdLogout(): number {
 function cmdWhoami(): number {
   const creds = loadCredentials();
   if (!creds) {
-    console.error('Not logged in. Run `opencode-windsurf-auth login`.');
+    console.error('Not logged in. Run `opencode-devin-auth login`.');
     return 1;
   }
   console.log(`Name       : ${creds.name}`);

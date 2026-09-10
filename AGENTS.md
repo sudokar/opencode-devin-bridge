@@ -22,12 +22,12 @@ bun test         # Run tests
 ```
 src/
 ├── plugin.ts              # Main entry, OpenAI-compatible fetch handler
-├── cli.ts                 # `opencode-windsurf-auth` CLI: login/logout/whoami/status
+├── cli.ts                 # `opencode-devin-auth` CLI: login/logout/whoami/status
 ├── constants.ts           # Plugin ID, gRPC service names
 ├── oauth/                 # NEW (0.3) — browser-based OAuth login flow
 │   ├── login.ts           # Loopback callback + manual-paste strategies
 │   ├── register-user.ts   # POST register.windsurf.com → {apiKey, name, apiServerUrl}
-│   ├── storage.ts         # ~/.config/opencode-windsurf-auth/credentials.json (mode 0600)
+│   ├── storage.ts         # ~/.config/opencode-devin-auth/credentials.json (mode 0600)
 │   └── types.ts           # Region defaults, persisted-credentials shape
 └── plugin/
     ├── auth.ts                       # Legacy scrape-from-running-Windsurf path (still used as fallback)

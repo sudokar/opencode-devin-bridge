@@ -1,6 +1,6 @@
 # Windsurf OAuth — Protocol, Gotchas, and Why Cloud-Bypass Is Impossible
 
-Reverse-engineering notes for the `opencode-windsurf-auth login` flow added in 0.3+.
+Reverse-engineering notes for the `opencode-devin-auth login` flow added in 0.3+.
 Captures the parts that cost hours of grep/curl/strace to discover and would
 be miserable to re-derive. Sibling to [CASCADE_PROTOCOL.md](CASCADE_PROTOCOL.md)
 (wire format) and [REVERSE_ENGINEERING.md](REVERSE_ENGINEERING.md) (legacy
@@ -10,7 +10,7 @@ process scraping).
 
 ```
        ┌───────────────────┐  1. open browser            ┌─────────────────────┐
-opencode-windsurf-auth ───▶│ windsurf.com/         ────▶│ Auth0 / Firebase    │
+opencode-devin-auth ───▶│ windsurf.com/         ────▶│ Auth0 / Firebase    │
        (loopback :PORT)    │   windsurf/signin     │    │ Auth (response_type │
                            └───────────────────────┘    │  =token, implicit)  │
                                                         └──────────┬──────────┘
@@ -28,7 +28,7 @@ opencode-windsurf-auth ───▶│ windsurf.com/         ────▶│ 
                             └────────────────────┬─────────────────────┘
                                                  │ 4. persist
                           ┌──────────────────────▼────────────────────────┐
-                          │ ~/.config/opencode-windsurf-auth/credentials.json
+                          │ ~/.config/opencode-devin-auth/credentials.json
                           │ { apiKey, name, apiServerUrl, issuedAt, … }     │
                           └─────────────────────────────────────────────────┘
                                                  │
@@ -206,7 +206,7 @@ For when extension.js changes and you need to re-verify these claims. Offsets ar
 
 Order of suspicion:
 
-1. **`401 unauthenticated` on RegisterUser** → the firebase_id_token expired (it's ~1h). Re-run `opencode-windsurf-auth login`. State validation will fail loudly if it's a real CSRF mismatch.
+1. **`401 unauthenticated` on RegisterUser** → the firebase_id_token expired (it's ~1h). Re-run `opencode-devin-auth login`. State validation will fail loudly if it's a real CSRF mismatch.
 2. **`failed_precondition: Cascade session error` from cascade-client** → LS started OK but didn't get `Metadata.api_key`. Check that `--stdin_initial_metadata` was passed AND that the stdin write happened before `stdin.end()`. The "first call" of every fresh LS can occasionally hit this transiently; cascade-client retries once.
 3. **`Parent pipe closed`** in LS stderr → you let the Unix socket close. Bind a listener and never call `.close()` on it.
 4. **`Failed to connect` from http2.connect** → the LS is alive (lsof shows the port) but isn't speaking HTTP/2 on that port → you passed `--server_port`/`--lsp_port` reversed, OR the LS exited shortly after binding (check `lastStderr`).

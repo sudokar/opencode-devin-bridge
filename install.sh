@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# opencode-windsurf-auth — one-line installer
+# opencode-devin-auth — one-line installer
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/rsvedant/opencode-windsurf-auth/master/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/rsvedant/opencode-windsurf-auth/master/install.sh | bash -s -- --no-login
-#   curl -fsSL https://raw.githubusercontent.com/rsvedant/opencode-windsurf-auth/master/install.sh | bash -s -- --force
+#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash -s -- --no-login
+#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash -s -- --force
 #
 # What this does:
 #   1. Verifies opencode is on PATH (does NOT install opencode for you).
@@ -13,7 +13,7 @@
 #      equivalent) before any edit.
 #   3. Merges these into your existing config — DOES NOT touch anything
 #      else you already had:
-#        - `"plugin": ["opencode-windsurf-auth@beta"]`  (additive)
+#        - `"plugin": ["opencode-devin-auth@beta"]`  (additive)
 #        - `"provider.windsurf"`  (only if absent; --force overrides)
 #   4. Runs `opencode auth login --provider windsurf` to sign you in.
 #      Skip with `--no-login`.
@@ -58,10 +58,10 @@ for arg in "$@"; do
       # which made `--help` print `sed: bash: No such file or directory`
       # in the documented one-line install path.
       cat <<'HELP'
-opencode-windsurf-auth installer
+opencode-devin-auth installer
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/rsvedant/opencode-windsurf-auth/master/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash
   curl -fsSL .../install.sh | bash -s -- --no-login
   curl -fsSL .../install.sh | bash -s -- --force
 
@@ -75,7 +75,7 @@ What this does:
   2. Backs up ~/.config/opencode/opencode.json before any edit.
   3. Merges into your existing config (additive — your other settings
      are untouched):
-       - "plugin": ["opencode-windsurf-auth@beta"]
+       - "plugin": ["opencode-devin-auth@beta"]
        - "provider.windsurf"  (only if absent, unless --force)
   4. Runs "opencode auth login --provider windsurf" so you can sign in.
 
@@ -88,7 +88,7 @@ HELP
 done
 
 # ── banner ───────────────────────────────────────────────────────────
-printf '\n%sopencode-windsurf-auth installer%s\n' "$BLUE" "$RESET"
+printf '\n%sopencode-devin-auth installer%s\n' "$BLUE" "$RESET"
 printf '%s%s%s\n\n' "$DIM" "Cognition (Windsurf) provider for opencode — cloud-direct, no IDE required" "$RESET"
 
 # ── 1. opencode present? ─────────────────────────────────────────────
@@ -405,13 +405,13 @@ if [[ "$RUNTIME_KIND" == "js" ]]; then
     // an object) from a hand-edited config; we coerce to an empty array
     // so the `.some()` + `.push()` calls below work without crashing.
     if (!Array.isArray(cur.plugin)) cur.plugin = [];
-    const PLUGIN = "opencode-windsurf-auth@beta";
+    const PLUGIN = "opencode-devin-auth@beta";
     // `@[^/]*$` strips ONLY a trailing `@version` suffix; `@.*$` would
     // greedily consume the leading `@` of any hypothetical future scoped
-    // form like `@cognition/opencode-windsurf-auth`, collapsing to ""
+    // form like `@cognition/opencode-devin-auth`, collapsing to ""
     // and breaking dedup. We do not currently publish under a scope,
     // but this is cheap defense for when we might.
-    if (!cur.plugin.some((p) => typeof p === "string" && p.replace(/@[^/]*$/, "") === "opencode-windsurf-auth")) {
+    if (!cur.plugin.some((p) => typeof p === "string" && p.replace(/@[^/]*$/, "") === "opencode-devin-auth")) {
       cur.plugin.push(PLUGIN);
     }
 
@@ -586,9 +586,9 @@ if not isinstance(cur.get("$schema"), str) or not cur["$schema"]:
 if not isinstance(cur.get("plugin"), list):
     cur["plugin"] = []
 # Use `@[^/]*$` (matches JS branch): strips ONLY trailing @version, not
-# a scope-prefixing @ inside e.g. @scope/opencode-windsurf-auth.
-if not any(isinstance(p, str) and re.sub(r"@[^/]*$", "", p) == "opencode-windsurf-auth" for p in cur["plugin"]):
-    cur["plugin"].append("opencode-windsurf-auth@beta")
+# a scope-prefixing @ inside e.g. @scope/opencode-devin-auth.
+if not any(isinstance(p, str) and re.sub(r"@[^/]*$", "", p) == "opencode-devin-auth" for p in cur["plugin"]):
+    cur["plugin"].append("opencode-devin-auth@beta")
 
 if not isinstance(cur.get("provider"), dict):
     cur["provider"] = {}
@@ -759,4 +759,4 @@ printf '  opencode run --model=windsurf/kimi-k2.6 -f screenshot.png -- "describe
 printf '  opencode run --model=windsurf/claude-opus-4.7:high "what does this codebase do?"\n\n'
 printf '%sAnything broken?%s\n' "$BLUE"  "$RESET"
 printf '  • Restore your previous config:  cp %s %s\n' "$RESTORE_BACKUP_Q" "$RESTORE_CONFIG_Q"
-printf '  • Open an issue:  https://github.com/rsvedant/opencode-windsurf-auth/issues\n\n'
+printf '  • Open an issue:  https://github.com/sudokar/opencode-devin-auth/issues\n\n'

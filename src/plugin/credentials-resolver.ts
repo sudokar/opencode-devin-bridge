@@ -9,7 +9,7 @@
  * Cloud-direct flow (the one we ship):
  *   1. User runs `opencode auth login` → picks "Sign in with Windsurf" → our
  *      `methods[0].authorize()` runs the browser OAuth flow and writes
- *      `~/.config/opencode-windsurf-auth/credentials.json`.
+ *      `~/.config/opencode-devin-auth/credentials.json`.
  *   2. On every chat: `loadCredentials()` reads the file, returns
  *      `{ apiKey, apiServerUrl, cloudDirect: true }`.
  *   3. `streamChatGenerator` sees `cloudDirect: true` and dispatches to
@@ -97,7 +97,7 @@ export async function resolveCredentials(opts: ResolveOptions = {}): Promise<Win
   if (!oauth) {
     throw new WindsurfError(
       'Not authenticated. Run `opencode auth login` and select "Sign in with Windsurf", ' +
-      'or run `npx opencode-windsurf-auth login` directly.',
+      'or run `npx opencode-devin-auth login` directly.',
       WindsurfErrorCode.AUTH_FAILED,
     );
   }

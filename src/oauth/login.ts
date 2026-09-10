@@ -76,7 +76,7 @@ export async function login(opts: LoginOptions = {}): Promise<OAuthLoginResult> 
   // Preserve the existing `syncedViaOpencodeAuth` flag if a previous
   // login wrote one. Without this preservation, a user who did
   // `opencode auth login` (sets flag=true) and then later ran
-  // `npx opencode-windsurf-auth login` (used to omit the flag) would
+  // `npx opencode-devin-auth login` (used to omit the flag) would
   // end up with flag=undefined — subsequent `opencode auth logout`
   // would no longer mirror-clear our credentials file, leaving a stale
   // api_key trusted by the proxy auth gate.
@@ -468,7 +468,7 @@ function startCallbackServer(requestedPort?: number): Promise<CallbackServer> {
 
 function renderResponse(res: http.ServerResponse, ok: boolean, message: string): void {
   const html = `<!doctype html>
-<html><head><meta charset="utf-8"><title>opencode-windsurf-auth</title>
+<html><head><meta charset="utf-8"><title>opencode-devin-auth</title>
 <style>
   body{font:14px -apple-system,Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0b0d12;color:#e7e9ee}
   .card{max-width:520px;padding:28px 32px;border-radius:14px;background:#151823;border:1px solid #232838;text-align:center}

@@ -1,8 +1,8 @@
-# opencode-windsurf-auth
+# opencode-devin-auth
 
-[![npm version](https://img.shields.io/npm/v/opencode-windsurf-auth.svg)](https://www.npmjs.com/package/opencode-windsurf-auth)
-[![npm beta](https://img.shields.io/npm/v/opencode-windsurf-auth/beta.svg?label=beta)](https://www.npmjs.com/package/opencode-windsurf-auth)
-[![npm downloads](https://img.shields.io/npm/dw/opencode-windsurf-auth.svg)](https://www.npmjs.com/package/opencode-windsurf-auth)
+[![npm version](https://img.shields.io/npm/v/opencode-devin-auth.svg)](https://www.npmjs.com/package/opencode-devin-auth)
+[![npm beta](https://img.shields.io/npm/v/opencode-devin-auth/beta.svg?label=beta)](https://www.npmjs.com/package/opencode-devin-auth)
+[![npm downloads](https://img.shields.io/npm/dw/opencode-devin-auth.svg)](https://www.npmjs.com/package/opencode-devin-auth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > Use Windsurf models in [opencode](https://opencode.ai/): Claude, GPT, Gemini, Kimi, DeepSeek, SWE-1.6, and more with your existing Windsurf subscription. All via Windsurf OAuth, no app required.
@@ -12,7 +12,7 @@
 ### Option A - one-line wizard (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rsvedant/opencode-windsurf-auth/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash
 ```
 
 The wizard backs up your existing `~/.config/opencode/opencode.json`, merges in the plugin entry + a curated 7-model `provider.windsurf` block (additive, your other settings are untouched), then launches `opencode auth login --provider windsurf` so you can sign in.
@@ -27,7 +27,7 @@ Flags:
 
 Pass them through the pipe:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rsvedant/opencode-windsurf-auth/master/install.sh | bash -s -- --no-login
+curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash -s -- --no-login
 ```
 
 ### Option B - manual
@@ -37,7 +37,7 @@ Paste this into `~/.config/opencode/opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-windsurf-auth@beta"],
+  "plugin": ["opencode-devin-auth@beta"],
   "provider": {
     "windsurf": {
       "name": "Cognition (Windsurf)",
@@ -131,14 +131,14 @@ opencode auth login --provider windsurf   # browser-based, recommended
 opencode auth logout windsurf             # clears the credential
 
 # Headless / SSH / no-browser fallback:
-npx opencode-windsurf-auth login --manual
-npx opencode-windsurf-auth whoami         # show signed-in account
-npx opencode-windsurf-auth status         # show credentials path + version
+npx opencode-devin-auth login --manual
+npx opencode-devin-auth whoami         # show signed-in account
+npx opencode-devin-auth status         # show credentials path + version
 ```
 
 Credentials are stored mode `0600` at the XDG-config location opencode itself uses, on every platform:
 
-- Linux + macOS + Windows: `~/.config/opencode-windsurf-auth/credentials.json`
+- Linux + macOS + Windows: `~/.config/opencode-devin-auth/credentials.json`
 
 (opencode doesn't honor `%APPDATA%` on Windows either, it follows XDG conventions everywhere — so the plugin's credentials sit next to opencode's own config.)
 
@@ -167,7 +167,7 @@ The plugin refuses to silently adopt a foreign listener on that port because a s
 The CLI fallback prints a URL you can click manually:
 
 ```bash
-npx opencode-windsurf-auth login --manual
+npx opencode-devin-auth login --manual
 ```
 
 Or paste the URL it shows into any browser on a machine that can reach your headless host (the loopback callback won't work cross-host, so use `--manual` for fully-headless setups).
@@ -193,13 +193,13 @@ Confirm the plugin entry is present:
 
 ```bash
 jq '.plugin' ~/.config/opencode/opencode.json
-# Should contain "opencode-windsurf-auth@beta"
+# Should contain "opencode-devin-auth@beta"
 ```
 
 Then nuke opencode's plugin cache so it re-resolves from npm:
 
 ```bash
-rm -rf ~/.cache/opencode/packages/opencode-windsurf-auth@beta
+rm -rf ~/.cache/opencode/packages/opencode-devin-auth@beta
 opencode auth login
 ```
 </details>
@@ -209,7 +209,7 @@ opencode auth login
 ```
 src/
 ├── plugin.ts                # Proxy server + opencode hooks (auth + chat.params)
-├── cli.ts                   # `opencode-windsurf-auth` standalone CLI
+├── cli.ts                   # `opencode-devin-auth` standalone CLI
 ├── cloud-direct/            # Cognition Connect-RPC wire client
 │   ├── chat.ts              # GetChatMessage stream + SSE adapter
 │   ├── wire.ts              # Proto + Connect framing
@@ -227,8 +227,8 @@ src/
 ## Development
 
 ```bash
-git clone https://github.com/rsvedant/opencode-windsurf-auth.git
-cd opencode-windsurf-auth
+git clone https://github.com/sudokar/opencode-devin-auth.git
+cd opencode-devin-auth
 bun install
 bun run typecheck
 bun run build

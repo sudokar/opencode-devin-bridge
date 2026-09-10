@@ -181,7 +181,7 @@ export const PLUGIN_ID = 'windsurf';
 export const ACCOUNTS_FILE = 'windsurf-accounts.json';
 
 /** User agent for requests */
-export const USER_AGENT = 'opencode-windsurf-auth/0.1.0';
+export const USER_AGENT = 'opencode-devin-auth/0.1.0';
 
 // ============================================================================
 // Headers

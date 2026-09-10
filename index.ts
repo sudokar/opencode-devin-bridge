@@ -1,5 +1,5 @@
 /**
- * opencode-windsurf-auth — opencode plugin entry point.
+ * opencode-devin-auth — opencode plugin entry point.
  *
  * Why this file only re-exports `WindsurfPlugin` (and the `default` alias)
  * and DELIBERATELY does NOT re-export `createWindsurfPlugin`:
@@ -32,17 +32,17 @@
  *
  *   `createWindsurfPlugin` itself is still available for programmatic
  *   callers via the explicit subpath `import { createWindsurfPlugin }
- *   from 'opencode-windsurf-auth/dist/src/plugin.js'`. The factory is
+ *   from 'opencode-devin-auth/dist/src/plugin.js'`. The factory is
  *   only useful for tests or for re-instantiating with a custom
  *   `providerId`; it isn't part of the documented public API.
  *
  * @example
  * ```typescript
- * import WindsurfPlugin from 'opencode-windsurf-auth';
+ * import WindsurfPlugin from 'opencode-devin-auth';
  * // OR
- * import { WindsurfPlugin } from 'opencode-windsurf-auth';
+ * import { WindsurfPlugin } from 'opencode-devin-auth';
  *
- * export default { plugin: ['opencode-windsurf-auth@beta'] };  // opencode auto-loads via the default export
+ * export default { plugin: ['opencode-devin-auth@beta'] };  // opencode auto-loads via the default export
  * ```
  */
 

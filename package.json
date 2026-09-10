@@ -1,14 +1,14 @@
 {
-  "name": "opencode-windsurf-auth",
-  "version": "0.3.3",
+  "name": "opencode-devin-auth",
+  "version": "0.1.0",
   "description": "OpenCode plugin for Windsurf/Codeium authentication - use Windsurf models in OpenCode",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rsvedant/opencode-windsurf-auth.git"
+    "url": "git+https://github.com/sudokar/opencode-devin-auth.git"
   },
-  "homepage": "https://github.com/rsvedant/opencode-windsurf-auth#readme",
+  "homepage": "https://github.com/sudokar/opencode-devin-auth#readme",
   "bugs": {
-    "url": "https://github.com/rsvedant/opencode-windsurf-auth/issues"
+    "url": "https://github.com/sudokar/opencode-devin-auth/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -20,7 +20,7 @@
     }
   },
   "bin": {
-    "opencode-windsurf-auth": "./dist/src/cli.js"
+    "opencode-devin-auth": "./dist/src/cli.js"
   },
   "files": [
     "dist"
@@ -50,10 +50,10 @@
     "xdg-basedir": "^5.1.0"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.1.21",
-    "@types/bun": "^1.3.6",
-    "@types/node": "^25.0.0",
-    "typescript": "^5.7.0"
+    "@opencode-ai/plugin": "^1.18.30",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^25.0.8",
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "typescript": "^5"

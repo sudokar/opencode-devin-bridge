@@ -1,9 +1,9 @@
 /**
  * On-disk credential storage for the OAuth flow.
  *
- * Path: `$XDG_CONFIG_HOME/opencode-windsurf-auth/credentials.json` —
+ * Path: `$XDG_CONFIG_HOME/opencode-devin-auth/credentials.json` —
  * verified that on the actual `xdg-basedir` package, `xdgConfig` resolves
- * to `~/.config/opencode-windsurf-auth` on Linux AND macOS (the package
+ * to `~/.config/opencode-devin-auth` on Linux AND macOS (the package
  * doesn't follow the Cocoa "Library/Application Support" convention even
  * on macOS). Windows falls through to `~/.config` via our manual fallback
  * since xdgConfig is undefined there.
@@ -31,7 +31,7 @@ import * as os from 'os';
 import { xdgConfig } from 'xdg-basedir';
 import type { PersistedCredentials } from './types.js';
 
-const APP_DIR_NAME = 'opencode-windsurf-auth';
+const APP_DIR_NAME = 'opencode-devin-auth';
 const CREDS_FILENAME = 'credentials.json';
 
 export function getCredentialsDir(): string {
@@ -184,7 +184,7 @@ export function loadCredentials(): PersistedCredentials | null {
           throw new Error(
             `Credentials file at ${p} has insecure permissions (mode ${modeBits.toString(8).padStart(4, '0')}). ` +
             `Expected 0600. Failed to repair: ${(chmodErr as Error).message}. ` +
-            `Either chmod 600 the file yourself or run 'opencode-windsurf-auth logout && opencode auth login' to recreate it.`,
+            `Either chmod 600 the file yourself or run 'opencode-devin-auth logout && opencode auth login' to recreate it.`,
           );
         }
       }
@@ -198,10 +198,10 @@ export function loadCredentials(): PersistedCredentials | null {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error(`Credentials file at ${p} is not valid JSON. Run 'opencode-windsurf-auth login' to re-authenticate, or delete the file.`);
+    throw new Error(`Credentials file at ${p} is not valid JSON. Run 'opencode-devin-auth login' to re-authenticate, or delete the file.`);
   }
   if (!isPersistedCredentials(parsed)) {
-    throw new Error(`Credentials file at ${p} is missing required fields. Run 'opencode-windsurf-auth login' to re-authenticate.`);
+    throw new Error(`Credentials file at ${p} is missing required fields. Run 'opencode-devin-auth login' to re-authenticate.`);
   }
   return parsed;
 }

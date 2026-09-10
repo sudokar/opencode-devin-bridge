@@ -35,14 +35,14 @@ import type { Auth } from '@opencode-ai/sdk';
 // File-based debug logger because opencode-darwin-arm64 swallows our
 // console.error in some invocations (TUI takes over stderr). Set
 // WINDSURF_PLUGIN_DEBUG=1 to enable; logs land in
-// ~/.cache/opencode-windsurf-auth/plugin.log so they're easy to tail.
+// ~/.cache/opencode-devin-auth/plugin.log so they're easy to tail.
 const debugLog = (() => {
   const enabled = !!process.env.WINDSURF_PLUGIN_DEBUG;
   // Debug log lives under tmp; tighten permissions to 0700 dir + 0600 file
   // since the log mirrors request bodies (system prompts, tool schemas,
   // sometimes prompt content) and we'd rather not have it world-readable
   // on shared multi-user hosts.
-  const dir = path.join(os.tmpdir(), 'opencode-windsurf-auth-debug');
+  const dir = path.join(os.tmpdir(), 'opencode-devin-auth-debug');
   let writeStream: fs.WriteStream | null = null;
   if (enabled) {
     try {
@@ -645,7 +645,7 @@ const PLUGIN_VERSION: string = (() => {
   // Read once at module load — used to namespace the global slot key so
   // multiple plugin versions in the same process don't fight (e.g. two
   // entries in a monorepo's lockfile resolving to different
-  // opencode-windsurf-auth versions). Probe several paths because
+  // opencode-devin-auth versions). Probe several paths because
   // __dirname differs between dev (src/) and dist/ (dist/src/),
   // and installed packages place package.json at varying relative depths.
   const candidates = [
@@ -658,7 +658,7 @@ const PLUGIN_VERSION: string = (() => {
       const pkg = JSON.parse(fs.readFileSync(p, 'utf8')) as { name?: string; version?: string };
       // Sanity-check the name so we don't pick up an unrelated package.json
       // up the tree (e.g. a monorepo's root).
-      if (pkg.name === 'opencode-windsurf-auth' && typeof pkg.version === 'string') {
+      if (pkg.name === 'opencode-devin-auth' && typeof pkg.version === 'string') {
         return pkg.version;
       }
     } catch { /* try next */ }
@@ -916,7 +916,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
               // Dump full tool definitions for the first 3 + any whose
               // parameters look suspicious ($ref / discriminator / oneOf)
               try {
-                const dumpPath = path.join(os.tmpdir(), 'opencode-windsurf-auth-debug', 'tools-dump.json');
+                const dumpPath = path.join(os.tmpdir(), 'opencode-devin-auth-debug', 'tools-dump.json');
                 // Tighten parent dir + file mode to 0700 / 0600 so the
                 // dumped tool schemas (which can include user file paths
                 // in descriptions) aren't world-readable on shared hosts.
@@ -1158,7 +1158,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
           : undefined;
       if (code === 'EADDRINUSE') {
         throw new Error(
-          `opencode-windsurf-auth: port ${WINDSURF_PROXY_PORT} is already in use by another process. ` +
+          `opencode-devin-auth: port ${WINDSURF_PROXY_PORT} is already in use by another process. ` +
           `Identify the squatter with \`lsof -nP -iTCP:${WINDSURF_PROXY_PORT} -sTCP:LISTEN\` and kill it, then re-run opencode. ` +
           `(This port is the documented baseURL for the Windsurf provider; we refuse to silently adopt a foreign listener since it would be able to capture your prompts.)`,
         );
@@ -1214,7 +1214,7 @@ export const createWindsurfPlugin =
          *   - opencode auth was CLEARED via `opencode auth logout windsurf` →
          *     clear credentials.json so we don't keep using a stale token
          *
-         * The CLI flow (`npx opencode-windsurf-auth login`) doesn't touch
+         * The CLI flow (`npx opencode-devin-auth login`) doesn't touch
          * opencode's auth store, so we DON'T delete credentials.json just
          * because opencode's store happens to be empty — we check via the
          * `lastSyncedViaOpencode` marker.
@@ -1301,7 +1301,7 @@ export const createWindsurfPlugin =
             // console.warn so the bare CLI also gets a visible hint.
             try {
               debugLog.log('[windsurf-plugin] loader credential-sync failed:', loaderErr instanceof Error ? loaderErr.message : loaderErr);
-              process.stderr.write(`[opencode-windsurf-auth] credential sync failed: ${loaderErr instanceof Error ? loaderErr.message : String(loaderErr)}\n`);
+              process.stderr.write(`[opencode-devin-auth] credential sync failed: ${loaderErr instanceof Error ? loaderErr.message : String(loaderErr)}\n`);
             } catch { /* */ }
           }
           return {};
@@ -1324,7 +1324,7 @@ export const createWindsurfPlugin =
             // when the field is absent. Providing an empty array is the
             // smallest workaround and is type-clean.
             //
-            // GitHub issue: rsvedant/opencode-windsurf-auth#13
+            // GitHub issue: sudokar/opencode-devin-auth#13
             prompts: [],
             async authorize() {
               // Two-stage: prepareLogin BINDS the loopback NOW and returns
@@ -1362,7 +1362,7 @@ export const createWindsurfPlugin =
                   // "Failed to authorize". Mirror the *cause* to a known
                   // tmpfile so the user can `cat` it after a failure without
                   // setting any env vars.
-                  const errLogPath = path.join(os.tmpdir(), 'opencode-windsurf-auth-last-error.log');
+                  const errLogPath = path.join(os.tmpdir(), 'opencode-devin-auth-last-error.log');
                   const writeErr = (stage: string, err: unknown) => {
                     const detail =
                       err instanceof Error

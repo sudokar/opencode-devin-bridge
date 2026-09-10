@@ -36,7 +36,7 @@
  *                                                 to stdout (for inspection)
  *
  * Auth: reads credentials.json the same way the plugin does. Run after
- * `opencode auth login` (or `npx opencode-windsurf-auth login`) so this
+ * `opencode auth login` (or `npx opencode-devin-auth login`) so this
  * script has a usable api_key.
  *
  * SAFETY: this is a SKETCH (not yet committed). Review before wiring into
@@ -82,7 +82,7 @@ async function fetchCatalog(): Promise<ClientModelConfig[]> {
   if (!creds) {
     throw new Error(
       'No Windsurf credentials found. Run `opencode auth login` (or ' +
-      '`npx opencode-windsurf-auth login`) first.',
+      '`npx opencode-devin-auth login`) first.',
     );
   }
   const host = (creds.apiServerUrl ?? 'https://server.codeium.com').replace(/\/$/, '');
