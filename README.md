@@ -5,7 +5,7 @@
 [![npm downloads](https://img.shields.io/npm/dw/opencode-devin-auth.svg)](https://www.npmjs.com/package/opencode-devin-auth)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> Use Windsurf models in [opencode](https://opencode.ai/): Claude, GPT, Gemini, Kimi, DeepSeek, SWE-1.6, and more with your existing Windsurf subscription. All via Windsurf OAuth, no app required.
+> Use Devin models in [opencode](https://opencode.ai/): Claude, GPT, Gemini, Kimi, DeepSeek, SWE-1.6, and more with your existing Devin subscription. All via Devin OAuth, no app required.
 
 ## Install
 
@@ -15,7 +15,7 @@
 curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash
 ```
 
-The wizard backs up your existing `~/.config/opencode/opencode.json`, merges in the plugin entry + a curated 7-model `provider.windsurf` block (additive, your other settings are untouched), then launches `opencode auth login --provider windsurf` so you can sign in.
+The wizard backs up your existing `~/.config/opencode/opencode.json`, merges in the plugin entry + a curated 7-model `provider.windsurf` block (additive, your other settings are untouched), then launches `opencode auth login --provider windsurf` so you can sign in with Devin.
 
 Flags:
 
@@ -40,7 +40,7 @@ Paste this into `~/.config/opencode/opencode.json`:
   "plugin": ["opencode-devin-auth@beta"],
   "provider": {
     "windsurf": {
-      "name": "Cognition (Windsurf)",
+      "name": "Cognition (Devin)",
       "npm": "@ai-sdk/openai-compatible",
       "options": { "baseURL": "http://127.0.0.1:42100/v1" },
       "models": {
@@ -104,7 +104,7 @@ Paste this into `~/.config/opencode/opencode.json`:
 Sign in:
 ```bash
 opencode auth login --provider windsurf
-# → browser opens; sign in with your Windsurf account
+# → browser opens; sign in with your Devin account
 # → credential is saved automatically
 ```
 
@@ -118,7 +118,7 @@ opencode run --model=windsurf/claude-opus-4.7:high "what does this codebase do?"
 opencode run --model=windsurf/kimi-k2.6 -f screenshot.png -- "describe this image"
 ```
 
-Variants pass through as model suffixes (`:low`, `:high`, `:thinking`, etc.) — same syntax Windsurf's own clients use.
+Variants pass through as model suffixes (`:low`, `:high`, `:thinking`, etc.) — the same syntax Devin clients use.
 
 ## Image attachments
 
@@ -187,7 +187,7 @@ Only models with `"attachment": true` in your `opencode.json` will receive image
 </details>
 
 <details>
-<summary><strong>"Cognition (Windsurf)" doesn't show up in <code>opencode auth login</code></strong></summary>
+<summary><strong>"Cognition (Devin)" doesn't show up in <code>opencode auth login</code></strong></summary>
 
 Confirm the plugin entry is present:
 
@@ -237,7 +237,7 @@ bun test
 
 ## Further reading
 
-- [docs/CASCADE_PROTOCOL.md](docs/CASCADE_PROTOCOL.md) — Windsurf 2.x wire-format notes (why `RawGetChatMessage` is dead, why model UIDs are now strings, required metadata fields, etc.)
+- [docs/CASCADE_PROTOCOL.md](docs/CASCADE_PROTOCOL.md) — Devin 2.x wire-format notes (why `RawGetChatMessage` is dead, why model UIDs are now strings, required metadata fields, etc.)
 
 ## License
 
