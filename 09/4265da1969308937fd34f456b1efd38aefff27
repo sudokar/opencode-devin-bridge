@@ -1,0 +1,20 @@
+README.md
+  s_d2d8a717289afe::t_d74c0ac6f25e21 43
+  s_d2d8a717289afe::t_d3ee6ca86657e2 8,18,107,121,190,240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "094265da1969308937fd34f456b1efd38aefff27",
+  "prompts": {},
+  "sessions": {
+    "s_d2d8a717289afe": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f7364b50affeY5oftDMDUd9zWX",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    }
+  }
+}
