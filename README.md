@@ -23,7 +23,7 @@ Use the models available to your Devin account directly in [OpenCode](https://op
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
 - [Architecture and Security](#architecture-and-security)
-- [Migration from `opencode-windsurf-auth`](#migration-from-opencode-windsurf-auth)
+- [Migration from `opencode-windsurf-auth` / `opencode-devin-auth`](#migration-from-opencode-windsurf-auth--opencode-devin-auth)
 - [Development and Releases](#development-and-releases)
 
 ## Requirements
@@ -40,13 +40,15 @@ The bridge's OAuth sign-in authorizes chat access. The Devin CLI separately prov
 
 ## Quickstart
 
+> **Coming from `opencode-windsurf-auth` or `opencode-devin-auth`?** Remove the old plugin first, then install the bridge normally — see [Migration from the legacy plugin](#migration-from-opencode-windsurf-auth--opencode-devin-auth). Leaving the legacy plugin entry in `opencode.json` alongside `opencode-devin-bridge` causes conflicts (duplicate providers, port clashes, and stale-credential errors) and is not supported.
+
 Run the installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-bridge/main/install.sh | bash
 ```
 
-The installer verifies OpenCode and the Devin CLI before it changes OpenCode configuration or begins OAuth. Unless you pass `--no-login`, it adds the plugin and `devin` provider, opens sign-in, and refreshes the catalog.
+The installer verifies OpenCode and the Devin CLI before it changes OpenCode configuration or begins OAuth. Unless you pass `--no-login`, it adds the plugin and `devin` provider, opens sign-in, and refreshes the catalog. It's additive — it does **not** remove a pre-existing `opencode-windsurf-auth` / `opencode-devin-auth` plugin entry or its `provider.windsurf` block, so remove those yourself first (see the migration section linked above).
 
 Then restart OpenCode and choose a model from your catalog:
 
@@ -152,6 +154,7 @@ If the Devin CLI is missing, unauthenticated, unreachable, or returns invalid ou
 | `devin` is absent from OpenCode sign-in | Confirm the plugin entry, clear OpenCode's cached package if necessary, then run `opencode auth login --provider devin` again. |
 | Image input is unavailable | Refresh the catalog. Catalog models are advertised with image input support; custom models need matching OpenCode attachment and modality configuration. |
 | `This model is enabled only in Devin Local` (for example, GPT-5.6 Luna) | This is a Devin backend restriction: the model may appear in the Devin CLI catalog but cannot be invoked through the bridge. Select another account-reported model or use it in Devin Local. |
+| Setup fails, or `devin`/`windsurf` behave inconsistently, right after installing the bridge | You likely still have `opencode-windsurf-auth` or `opencode-devin-auth` installed alongside `opencode-devin-bridge`. Remove the legacy plugin entry and its `provider.windsurf` block per [Migration from the legacy plugin](#migration-from-opencode-windsurf-auth--opencode-devin-auth), then restart OpenCode. Running both is unsupported. |
 
 ## Architecture And Security
 
@@ -161,26 +164,37 @@ The local endpoint binds only to `127.0.0.1`. Chat requests require an in-proces
 
 OAuth credentials are persisted at `$XDG_CONFIG_HOME/opencode-devin-bridge/credentials.json` (default: `~/.config/opencode-devin-bridge/credentials.json`). The model catalog is stored beside it as `models.json`. Files are written atomically with mode `0600`; on POSIX, insecure credential permissions and symbolic links are rejected rather than trusted. Short-lived chat authorization is minted and cached in memory instead of being persisted as a separate token.
 
-## Migration From `opencode-windsurf-auth`
+## Migration From `opencode-windsurf-auth` / `opencode-devin-auth`
 
-`opencode-devin-bridge` replaces the legacy plugin. On first use, it migrates valid legacy credentials and the model catalog from `$XDG_CONFIG_HOME/opencode-devin-auth/` when bridge state does not already exist. Existing bridge state always takes precedence.
+`opencode-devin-bridge` replaces the legacy `opencode-windsurf-auth` / `opencode-devin-auth` plugin. **Remove the legacy plugin, then install the bridge normally** — having both configured at the same time is unsupported and commonly causes duplicate/conflicting `provider` entries, port collisions on `42124`, and confusing auth errors from stale legacy credentials.
 
-Update your OpenCode configuration to use the new package and provider:
+1. Uninstall the legacy package:
 
-```json
-{
-  "plugin": ["opencode-devin-bridge@beta"],
-  "provider": {
-    "devin": {
-      "name": "Devin",
-      "npm": "@ai-sdk/openai-compatible",
-      "options": { "baseURL": "http://127.0.0.1:42124/v1" }
-    }
-  }
-}
-```
+   ```bash
+   npm uninstall -g opencode-windsurf-auth opencode-devin-auth 2>/dev/null
+   ```
 
-Remove the legacy plugin entry. If you still have `provider.windsurf`, migrate its settings to `provider.devin` and remove the old block. Refresh with `npx opencode-devin-bridge sync-models`, restart OpenCode, and select models as `devin/<model>`.
+2. Delete its entry from the `plugin` array and remove the `provider.windsurf` block from `~/.config/opencode/opencode.json`:
+
+   ```diff
+   {
+     "$schema": "https://opencode.ai/config.json",
+   -  "plugin": ["opencode-windsurf-auth"],
+   -  "provider": {
+   -    "windsurf": {
+   -      "name": "Windsurf",
+   -      "npm": "@ai-sdk/openai-compatible",
+   -      "options": { "baseURL": "http://127.0.0.1:<legacy-port>/v1" }
+   -    }
+   -  }
+   +  "plugin": [],
+   +  "provider": {}
+   }
+   ```
+
+3. Install the bridge as usual — run the [Quickstart](#quickstart) installer, or add the [Manual Setup](#manual-setup) block yourself. Either approach adds `opencode-devin-bridge` and `provider.devin` without touching anything else in the file.
+
+On first use, `opencode-devin-bridge` migrates valid legacy credentials and the model catalog from `$XDG_CONFIG_HOME/opencode-devin-auth/` when bridge state does not already exist, so you should not need to sign in again. Existing bridge state always takes precedence over legacy state.
 
 ## Development And Releases
 
