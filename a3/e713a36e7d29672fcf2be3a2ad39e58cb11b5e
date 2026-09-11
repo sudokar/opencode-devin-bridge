@@ -1,0 +1,433 @@
+tests/unit/cli-entrypoint.test.ts
+  s_f5968c37bf1f0d::t_3491dfad6ff68e 1-20
+src/models/types.ts
+  s_74df9d42aa9478::t_27c2798efb4e21 1-26,31-37
+  s_fa8598e13e2e2d::t_a2dbe75aa9d52e 27-30
+  s_74df9d42aa9478::t_bb20356cc3db12 38-68
+  s_fa8598e13e2e2d::t_dacb989a84c3cb 69
+tests/unit/variant.test.ts
+  s_ab0b214f2d8517::t_81cf3b39095754 144,240
+  s_f5968c37bf1f0d::t_3491dfad6ff68e 115-124,241-247
+  s_6fac84777ad99f::t_ece6f98b36c6ef 1-14,16-20,22-71,74-81,83-87,89,91-96,98-114,126-130,132,135-138,141-143,148-239,250-251
+tests/unit/models/to-provider-config.test.ts
+  s_e7844c8b5cffdd::t_7bb1b1280864b7 1-63
+src/plugin/models.ts
+  s_6fac84777ad99f::t_c14d563e9bacf5 115-116
+  s_6fac84777ad99f::t_45f7678da9a5e5 60,66
+  s_6fac84777ad99f::t_cf8137517a470f 113,117
+  s_6fac84777ad99f::t_df7d75175c4116 2-5,7,10-11,13-18,24-25,32-34,36-37,44,46,48,62-63,65,68,83-84,106,109,114,125-130,132,134-137,140-143,146,149-150,153-157,159-161,163
+  s_f5968c37bf1f0d::t_1e4116723c4544 28-30,118
+  s_6fac84777ad99f::t_96e63d5c9d1a40 38,40-43,47,50,53-59
+  s_ab0b214f2d8517::t_4ec54561371897 6,22
+  s_6fac84777ad99f::t_86628fb3545381 64,67,69-71,74-82,88-89,95-98,102,110-111
+  s_6fac84777ad99f::t_e798c6349d361d 107-108,112,121
+  s_6fac84777ad99f::t_00be0b42c8d863 19
+src/constants.ts
+  s_2cdbde5229750b::t_9dd117e6eee15a 178
+  s_ab0b214f2d8517::t_4ec54561371897 184
+tests/unit/constants.test.ts
+  s_2cdbde5229750b::t_fcced381f4f4b5 1-8
+tests/unit/cli-login.test.ts
+  s_c5e1957ea68f77::t_7090563552db8c 123,136,144-145,147
+  s_c5e1957ea68f77::t_a3b18a0d86094e 108-115,117-120
+  s_c5e1957ea68f77::t_8e10fd55c3b925 152
+  s_c5e1957ea68f77::t_bac8ce49ac0934 141
+  s_c5e1957ea68f77::t_a8cb852b24039b 1-71
+  s_c5e1957ea68f77::t_3f990192bd6711 121-122,124-135,137-140,142-143,146,148-151
+  s_c5e1957ea68f77::t_4a28b2328cf3b6 72-90
+  s_c5e1957ea68f77::t_35c0b1aa94c9a6 91-107
+  s_c5e1957ea68f77::t_4a85db8b5ccdb1 116
+openspec/changes/add-devin-model-sync/tasks.md
+  s_e7844c8b5cffdd::t_dc06d4d9bc356e 3-8
+  s_e7844c8b5cffdd::t_b6d0589959418c 12-15
+  s_e7844c8b5cffdd::t_9aa1fcaa78b690 1-2,9-11,16-18,23-25,30-32
+  s_e7844c8b5cffdd::t_a15d118089e782 26-29
+  s_e7844c8b5cffdd::t_36e07f7aff8eea 33-34
+  s_e7844c8b5cffdd::t_3c18999720e3ae 19-22
+src/models/store.ts
+  s_c5e1957ea68f77::t_320b2b0e3c719e 108-116
+  s_74df9d42aa9478::t_47305aa28d903d 1,3-7,11-15,17-18,21,23-32,38-39,53,55-57,106-107,117-120,125
+  s_74df9d42aa9478::t_4eaee302774dfc 8-10,16,22,121-124
+  s_0bb7ed275b9f2b::t_2fd9ba4245d753 44-45,54,58-105
+  s_ab0b214f2d8517::t_b1bc459e151d89 2,19-20,33-37,40-43,46-52
+openspec/changes/add-devin-model-sync/.openspec.yaml
+  s_e7844c8b5cffdd::t_c99d822d10c15f 1-2
+src/lib/atomic-file.ts
+  s_74df9d42aa9478::t_5df6b661b2da34 1-24,29-56,91-122
+  s_0bb7ed275b9f2b::t_2fd9ba4245d753 57-90
+  s_0bb7ed275b9f2b::t_38bd466afa308d 25-28
+tests/unit/oauth/protocol-contract.test.ts
+  s_ab0b214f2d8517::t_325f78c19e179a 1-26
+tests/unit/models/normalize.test.ts
+  s_74df9d42aa9478::t_9cffeec517791f 24-30
+  s_f5968c37bf1f0d::t_3491dfad6ff68e 41-51
+  s_e7844c8b5cffdd::t_7d5e539851c361 11,13-16
+  s_74df9d42aa9478::t_917d51f88daa5c 85,150-167,242
+  s_74df9d42aa9478::t_728682fce2259d 188-205
+  s_74df9d42aa9478::t_44b1b2172125a0 224-241
+  s_74df9d42aa9478::t_3a73e0d799abdc 168-187
+  s_74df9d42aa9478::t_c72793667b9cfa 40,52-83
+  s_74df9d42aa9478::t_d5a575c3071ad2 18-23
+  s_e7844c8b5cffdd::t_b64a98fa3bc87e 86-149
+  s_74df9d42aa9478::t_e64bec81126661 206-223
+  s_74df9d42aa9478::t_3b3bd7e633aa92 1-10,12,17,84
+  s_74df9d42aa9478::t_439f4e3e062940 31-39
+AGENTS.md
+  s_ab0b214f2d8517::t_7b493fc0874610 7,25,30,145,150
+  s_fa8598e13e2e2d::t_00ca6e97c16874 151
+  s_74df9d42aa9478::t_766fc570b7890b 140-144,146-148
+src/models/to-model-v2.ts
+  s_2cdbde5229750b::t_65579ee2308c2b 1-9,18-41,43-52
+  s_2cdbde5229750b::t_12deb22c63654a 10-17,42
+tests/unit/models/refresh.test.ts
+  s_74df9d42aa9478::t_db7834bfbdc8a3 1-5,9-24,33-52,65
+  s_fa8598e13e2e2d::t_10be3d79d301fb 110-144
+  s_fa8598e13e2e2d::t_83f8326e22d5b2 66-76,145
+  s_fa8598e13e2e2d::t_4f17405537bd08 7-8
+  s_74df9d42aa9478::t_69c81213d63c4a 59-64
+  s_fa8598e13e2e2d::t_93c8847c74b351 77-83
+  s_fa8598e13e2e2d::t_578c1d67a52643 6,25-32
+  s_74df9d42aa9478::t_ebad48d4c9d485 53-58
+  s_fa8598e13e2e2d::t_6b366f91abb4c4 84-109
+tests/unit/plugin-devin-provider.test.ts
+  s_e7844c8b5cffdd::t_f28705bb92a93a 97-112,122-131,134,141-163
+  s_2cdbde5229750b::t_68920bc0a9a60f 133,135-137,139-140,164
+  s_2cdbde5229750b::t_4e85544714034e 191-200
+  s_2cdbde5229750b::t_bf34547e06729c 88-93
+  s_2cdbde5229750b::t_7fa0581a755094 166-190,212
+  s_2cdbde5229750b::t_90241ecd0e7eb0 201-211
+  s_2cdbde5229750b::t_95771c137a2d78 213-235,237-244
+  s_2cdbde5229750b::t_8f98a154492bae 30-43
+  s_2cdbde5229750b::t_d5ca6dd2f8c201 15-29,44
+  s_e7844c8b5cffdd::t_88fbb6b31c42ae 115,120,138,236
+  s_2cdbde5229750b::t_a360aaa8ec986a 1-4,12-14
+  s_2cdbde5229750b::t_99930e3629fdbd 5-11
+  s_2cdbde5229750b::t_ad6728bcb99b02 95-96,113-114,116-119,121,132,165
+  s_2cdbde5229750b::t_d9c9b25e46bfb0 45-87,94
+openspec/.plus/last-update-check
+  s_e7844c8b5cffdd::t_b8d98ffe7b342f 1
+index.ts
+  s_ab0b214f2d8517::t_4ec54561371897 2,35,41,43,45
+src/oauth/login.ts
+  s_ab0b214f2d8517::t_50f3eceffa9a46 79,471
+src/plugin.ts
+  s_2cdbde5229750b::t_b6016fb481abd6 1245
+  s_2cdbde5229750b::t_edf1cf180b448a 81
+  s_e7844c8b5cffdd::t_75308c044a4417 1204
+  s_ab0b214f2d8517::t_f114e1e2711213 234,267,338,377,428,928,948,987,1040,1166,1169,1172,1176,1266,1269,1489,1492,1532,1609
+  s_ab0b214f2d8517::t_b1bc459e151d89 38-39,41,46,620,622,631-632,635,644-645,649,656
+  s_ab0b214f2d8517::t_7b493fc0874610 1335
+  s_2cdbde5229750b::t_ac822d1456137e 1240-1244,1246-1250
+  s_e7844c8b5cffdd::t_7ee45d2ba0c5da 1277-1292,1300-1320
+  s_2cdbde5229750b::t_f453e98ce5b28d 1631-1635
+  s_e7844c8b5cffdd::t_fbb80776f31ca8 1390
+  s_e7844c8b5cffdd::t_de531139587879 621,636
+  s_e7844c8b5cffdd::t_0a32f595ff0500 623-629,634,637-643,646-648,650-655
+  s_2cdbde5229750b::t_25286877380456 1619-1621,1623
+  s_c5e1957ea68f77::t_b8fa169e5d4d8c 1252-1265,1267-1268,1270-1275
+  s_2cdbde5229750b::t_8bfbce41069642 1328-1329,1331,1333,1341-1344
+  s_c5e1957ea68f77::t_4db844ab584b8c 80,83-84
+  s_ab0b214f2d8517::t_50f3eceffa9a46 688,701,959,1045,1107,1156,1189,1191,1193,1201-1203,1406,1493,1554
+  s_e7844c8b5cffdd::t_ff9dcce620667b 82
+  s_e7844c8b5cffdd::t_2e93a0f05a73c0 591,615-616,1180
+  s_2cdbde5229750b::t_4585a83f86377d 1323-1327,1330,1332,1334,1336-1340,1345
+  s_2cdbde5229750b::t_539bc0d1e5137e 1234
+  s_2cdbde5229750b::t_73e9128e3b9a2b 1375-1383
+  s_c5e1957ea68f77::t_1e0e1d77276818 1369-1373
+  s_2cdbde5229750b::t_ae9fb09eec0a70 34
+  s_ab0b214f2d8517::t_4ec54561371897 152-155,159-161
+  s_2cdbde5229750b::t_52f5c43ec1a5ec 1251,1276,1293-1299,1321-1322
+  s_2cdbde5229750b::t_1415a0879b7cd0 1222-1233,1235-1239
+  s_0bb7ed275b9f2b::t_2fd9ba4245d753 1507,1546
+  s_2cdbde5229750b::t_9d5083cb97556b 1384-1389,1391-1393
+.github/workflows/publish.yml
+  s_ab0b214f2d8517::t_81cf3b39095754 9,26,28,99-100,132,139,144,152-153
+tests/unit/models/source.test.ts
+  s_fa8598e13e2e2d::t_1b1d3761557bb3 40-44
+  s_fa8598e13e2e2d::t_f3285727aadfa4 53-60
+  s_74df9d42aa9478::t_78d90a1ca75882 1-15,61
+  s_74df9d42aa9478::t_60df6ca740c257 16-20
+  s_74df9d42aa9478::t_2a7dc0a884938b 21-25
+  s_74df9d42aa9478::t_1c95d6b04031e1 26-30
+  s_fa8598e13e2e2d::t_fe25fef28306fe 45-52
+  s_74df9d42aa9478::t_c07555c0da2b84 31-39
+openspec/changes/add-devin-model-sync/specs/model-catalog-sync/spec.md
+  s_e7844c8b5cffdd::t_5eb6373c5236c8 1-8,10-60,62-64,67-83,85-90,110-124,126,128-135,145-150,152-250,252,254,256,258-261,282-295,297-309,311-334
+  s_e7844c8b5cffdd::t_a61026a2f7ec88 9
+  s_e7844c8b5cffdd::t_ed5b951e4c046d 125,136-142,144
+  s_e7844c8b5cffdd::t_6aa43794359b6d 251,253,255,257,262-281
+  s_e7844c8b5cffdd::t_9cf89fcd2b48c7 61,65-66,84,91-109
+  s_e7844c8b5cffdd::t_4a8413f91f3735 296
+  s_e7844c8b5cffdd::t_8290295c27d91e 310
+  s_e7844c8b5cffdd::t_319a0cc57130ed 127
+  s_e7844c8b5cffdd::t_90a1781e94e44e 143
+  s_e7844c8b5cffdd::t_1b07b2bcf52a3c 151
+opencode_config_example.json
+  s_e7844c8b5cffdd::t_303469587733d0 11
+  s_2cdbde5229750b::t_3c0a83c26d6beb 7-8
+  s_ab0b214f2d8517::t_50f3eceffa9a46 4
+src/plugin/credentials-resolver.ts
+  s_0bb7ed275b9f2b::t_2fd9ba4245d753 99
+  s_ab0b214f2d8517::t_50f3eceffa9a46 12,100
+tests/unit/install-script.test.ts
+  s_85b2652eb278fc::t_d4df1197e029f3 6,14-21,23-44,46-47,49-56,58-64,66
+  s_85b2652eb278fc::t_d41addb2f73d32 73
+  s_85b2652eb278fc::t_b0e6754d7bb952 69-72,74-94
+  s_85b2652eb278fc::t_f80e669dc389ff 1-5,7-13,22,45,48,57,65,67-68
+openspec/changes/add-devin-model-sync/specs/devin-provider-identity/spec.md
+  s_e7844c8b5cffdd::t_ab2e22516e5eea 1-8,10-18,20-21,26-54,56
+  s_e7844c8b5cffdd::t_e4f0b4496a3b55 9,19,22-25,55
+tests/unit/oauth/storage.test.ts
+  s_ab0b214f2d8517::t_325f78c19e179a 1-4,6-38,40,63-74
+  s_0bb7ed275b9f2b::t_da15deb099c6bf 5,39,41-62
+tests/unit/proxy-port.test.ts
+  s_e7844c8b5cffdd::t_ed870dd205505b 1,3-4,11-12,15-17,19-21,24-26,29-32,34-38,40-41,43-47,49-52
+  s_ab0b214f2d8517::t_325f78c19e179a 9,13-14,18,22-23,27-28,33,39,42,48
+  s_e7844c8b5cffdd::t_88fbb6b31c42ae 10
+  s_ab0b214f2d8517::t_306aa1aa66bb88 2,5-8
+openspec/changes/add-devin-model-sync/design.md
+  s_e7844c8b5cffdd::t_b5c7572ffd8bef 9,107-108,185,198,203
+  s_e7844c8b5cffdd::t_05e036769ee074 173
+  s_e7844c8b5cffdd::t_bfd3ba2b45f2ed 124
+  s_e7844c8b5cffdd::t_38e66b0d593496 23,215
+  s_e7844c8b5cffdd::t_7249e327ce2d4f 1-8,10-22,24-71,73-106,109-123,125-172,174-184,186-197,199-202,204-214,216-222
+  s_e7844c8b5cffdd::t_9a6d0b84a1a2e7 72
+src/models/refresh.ts
+  s_fa8598e13e2e2d::t_8815685f9e65fc 18-21
+  s_74df9d42aa9478::t_b6ecd34ca0b65b 1-17,22-36
+src/cli.ts
+  s_fa8598e13e2e2d::t_17367926ff7bc3 239,250-251,253-257,270-274
+  s_fa8598e13e2e2d::t_d46f1e5d270512 258-261
+  s_c5e1957ea68f77::t_2df9db42e973f4 142
+  s_74df9d42aa9478::t_3c751503403844 234-238,240-249,275-276
+  s_fa8598e13e2e2d::t_f520bcdaa2bc3e 28
+  s_fa8598e13e2e2d::t_2ddae2b61c7eb8 262-264
+  s_c5e1957ea68f77::t_5eb98cdce98d2f 143-146
+  s_74df9d42aa9478::t_f51e27b9dad3f3 301-302
+  s_fa8598e13e2e2d::t_7e24f0de390ad6 265-267
+  s_74df9d42aa9478::t_ee3e191213580e 340-341,343-351
+  s_ab0b214f2d8517::t_4ec54561371897 3,122,125-129,161-162,173,202
+  s_74df9d42aa9478::t_6ea540983abd9c 27,29
+  s_c5e1957ea68f77::t_81b0be27e3491a 169-172,174-175
+  s_fa8598e13e2e2d::t_cf624c4b5c4237 252
+  s_c5e1957ea68f77::t_24afb3838b008d 165
+  s_fa8598e13e2e2d::t_b6586b9a58475a 268-269
+  s_f5968c37bf1f0d::t_1e4116723c4544 30-32,328-339,342
+src/oauth/storage.ts
+  s_ab0b214f2d8517::t_b1bc459e151d89 4-6,31-32,36,44-48,95-96,98,102,104-105,139,153,156
+  s_ab0b214f2d8517::t_527a1af09cc1bb 97
+  s_0bb7ed275b9f2b::t_2fd9ba4245d753 28,87-94,99-101,103,163-177
+  s_ab0b214f2d8517::t_7f8904d21778ea 106
+  s_74df9d42aa9478::t_8b92bd032eef59 57,74-76
+openspec/changes/add-devin-model-sync/proposal.md
+  s_e7844c8b5cffdd::t_c30de3433ad8e1 31
+  s_e7844c8b5cffdd::t_be41f344de4137 3-5
+  s_e7844c8b5cffdd::t_21464b9330d505 11,13,17-20,22-25
+  s_e7844c8b5cffdd::t_574d64efbe3814 14
+  s_e7844c8b5cffdd::t_0e384ab160aac0 1-2,6-8,10,15-16,26-30,32-40,42-45
+  s_e7844c8b5cffdd::t_a1ecc2e8defd2c 41
+  s_e7844c8b5cffdd::t_87f90a3ca2a598 21
+  s_e7844c8b5cffdd::t_a97fec4358f00d 9,12
+src/models/source.ts
+  s_fa8598e13e2e2d::t_2bd75b1e0c453a 37-48
+  s_fa8598e13e2e2d::t_a476eb4cc2b213 63-64
+  s_fa8598e13e2e2d::t_7d89acf29aacc7 33-36
+  s_fa8598e13e2e2d::t_b307beda5455fa 65
+  s_74df9d42aa9478::t_6bf4d99e736b6c 15-16
+  s_fa8598e13e2e2d::t_67f88fce20f025 8-12
+  s_74df9d42aa9478::t_5262d2155d7c5f 1-7,13-14,17-32,49-62,66-81
+tests/unit/models/store.test.ts
+  s_74df9d42aa9478::t_45d427d6c14c01 1-4,6-35,96
+  s_c5e1957ea68f77::t_c8b127ad615348 5
+  s_ab0b214f2d8517::t_325f78c19e179a 43-63
+  s_c5e1957ea68f77::t_eaa1f16d6908cd 107-111
+  s_c5e1957ea68f77::t_56a44b0431baea 97-101,112
+  s_74df9d42aa9478::t_c76d43e2b04421 36-41
+  s_0bb7ed275b9f2b::t_da15deb099c6bf 64-79
+  s_74df9d42aa9478::t_7a3b43a74caafb 42,80-85
+  s_74df9d42aa9478::t_bc9060b3a0fc67 86-95
+  s_c5e1957ea68f77::t_2117d20ad8520c 102-106
+README.md
+  s_74df9d42aa9478::t_67385f05cb4cd7 87
+  s_e7844c8b5cffdd::t_d02b90f1d9244e 125
+  s_e7844c8b5cffdd::t_e9db8a751899c4 67-68,81,94-96
+  s_e7844c8b5cffdd::t_b25f063a5cc91b 6
+  s_ab0b214f2d8517::t_8dcb39a9053f27 1,65,85,112-114,119,128,133,151,154,157,168,194,200,210
+  s_e7844c8b5cffdd::t_11eb8cbcc9f2ae 70,137,142,144,147
+  s_e7844c8b5cffdd::t_9decbfad27c308 108-109
+  s_e7844c8b5cffdd::t_128d9f171a056b 3-5,11-22,31-43,76-77,79-80,91
+  s_74df9d42aa9478::t_bdcda6f6aacc3e 103
+  s_fa8598e13e2e2d::t_3cb962f42eef61 134
+  s_ab0b214f2d8517::t_7f8904d21778ea 28,55,228-229
+  s_74df9d42aa9478::t_07a6901868c862 123-124,126-127,129-132
+  s_e7844c8b5cffdd::t_d0390ab24c5bb6 49-50
+  s_e7844c8b5cffdd::t_b7a073589b770a 152-153,155-156,158-159
+  s_e7844c8b5cffdd::t_815143cb5253db 92
+tests/unit/models/cli-sync-models.test.ts
+  s_74df9d42aa9478::t_639eb5dad7f0cc 1-4,6,8-22
+  s_fa8598e13e2e2d::t_ca4dbe8ac7bb03 140-151
+  s_74df9d42aa9478::t_e6dd9c45ac5f37 49-62
+  s_74df9d42aa9478::t_2f8c29584e5661 63-110
+  s_fa8598e13e2e2d::t_87f000dd52f531 125-134,136-139
+  s_ab0b214f2d8517::t_81cf3b39095754 135
+  s_fa8598e13e2e2d::t_d1375fb87aee3e 176-188
+  s_fa8598e13e2e2d::t_1976d6d25ae169 189-200
+  s_74df9d42aa9478::t_0e2d658d948f51 5,7,23-48,201
+  s_fa8598e13e2e2d::t_b2f41d7edcd1f9 152-163
+  s_fa8598e13e2e2d::t_be3ef2cf0103af 164-175
+  s_fa8598e13e2e2d::t_83aee510e57775 111-124
+tests/unit/plugin-stale-refresh.test.ts
+  s_c5e1957ea68f77::t_8f78427b356490 1-5,7-15,26-51,114
+  s_c5e1957ea68f77::t_78632dfa1863e8 16-25
+  s_c5e1957ea68f77::t_1e971ab1da3e07 52-66
+  s_c5e1957ea68f77::t_90111196807a30 6
+  s_c5e1957ea68f77::t_a150913c7860c8 67-89
+  s_c5e1957ea68f77::t_5ff6a27cdee5c6 102-113
+  s_c5e1957ea68f77::t_7c77ed912f874c 90-101
+src/cloud-direct/catalog.ts
+  s_e7844c8b5cffdd::t_11eb8cbcc9f2ae 242
+src/models/to-provider-config.ts
+  s_e7844c8b5cffdd::t_30765dcf0c5749 1-57
+package.json
+  s_ab0b214f2d8517::t_7f8904d21778ea 7,9,11
+  s_ab0b214f2d8517::t_4ec54561371897 2-4,23,40-41
+docs/OAUTH.md
+  s_ab0b214f2d8517::t_7b493fc0874610 3,13,31,209
+docs/CLOUD_DIRECT.md
+  s_ab0b214f2d8517::t_7b493fc0874610 269
+.gitignore
+  s_74df9d42aa9478::t_875d323227329f 26,28
+  s_74df9d42aa9478::t_f0902431076376 27
+src/models/normalize.ts
+  s_74df9d42aa9478::t_3c29d6716342a2 1-4,6,25-28,108-109
+  s_e7844c8b5cffdd::t_d6f1ea54751556 7-24,29
+  s_f5968c37bf1f0d::t_1e4116723c4544 32,49-52,54,57,67,72-79
+  s_74df9d42aa9478::t_2df177840af419 42,102-107
+  s_74df9d42aa9478::t_6fafe79d373030 30-31,33-41
+  s_74df9d42aa9478::t_9521a2b4d006e3 5,47-48,53,55-56,58-60
+  s_74df9d42aa9478::t_31ad7e66d71266 43-46
+  s_74df9d42aa9478::t_578734f43aa85e 82,84,92-96,100
+  s_74df9d42aa9478::t_972d21b76f37f9 83,85-88,97-99
+  s_74df9d42aa9478::t_709d03e7d73f29 61-66,68-71,80-81,89-91
+  s_74df9d42aa9478::t_f94e0e167d3c19 101
+openspec/changes/add-devin-model-sync/specs/model-catalog-refresh-command/spec.md
+  s_e7844c8b5cffdd::t_59e962be99d4af 36,47,56,70,78,90,100,111,120
+  s_e7844c8b5cffdd::t_7d394664461af0 1-8,10-14,16-22,24-35,37-46,48-55,57-69,71-77,79-89,91-99,101-110,112-119,121-123
+  s_e7844c8b5cffdd::t_c10246bfc2fcf2 9,15,23
+tests/unit/models/to-model-v2.test.ts
+  s_2cdbde5229750b::t_2fe3e40ed1540b 37-42
+  s_2cdbde5229750b::t_4d0129081015b0 57-65
+  s_2cdbde5229750b::t_0d122a4a7047f3 1-36,66
+  s_2cdbde5229750b::t_0bb9805a0c28df 43-56
+install.sh
+  s_0bb7ed275b9f2b::t_2fd9ba4245d753 94,660
+  s_85b2652eb278fc::t_ea417ce337b580 12-13,15,19,189-213,223,333,377,656,685
+  s_2cdbde5229750b::t_be9b69a9e8347e 663,681
+  s_2cdbde5229750b::t_3f4b2edc03d3a2 71,81
+  s_ab0b214f2d8517::t_527a1af09cc1bb 666-670,672,678
+  s_85b2652eb278fc::t_7f106fc03bbc1e 76-78,80,82
+  s_2cdbde5229750b::t_2ea519c64831c1 18
+  s_ab0b214f2d8517::t_7f8904d21778ea 6-8,65,704
+  s_2cdbde5229750b::t_c6d5aa6b2e1512 571-572,574-575,577-579,581,583-584,589,591,593,595
+  s_2cdbde5229750b::t_d496d9a0bf60cc 378
+  s_ab0b214f2d8517::t_81cf3b39095754 665
+  s_2cdbde5229750b::t_94de0fd1f24a28 699-701
+  s_e7844c8b5cffdd::t_303469587733d0 467,586
+  s_2cdbde5229750b::t_7b99bd55b478e3 444-445,447,449,451-452,457-460,462,464-465,470-472,475
+  s_ab0b214f2d8517::t_8dcb39a9053f27 3,17,62,93,434,437,440,446,565-567,573,671,673-674,676-677,679
+  s_ab0b214f2d8517::t_7b493fc0874610 675
+src/oauth/types.ts
+  s_ab0b214f2d8517::t_50f3eceffa9a46 44
+tests/fixtures/models/devin-models-list.json
+  s_74df9d42aa9478::t_d255f670ac4b9b 1-1306
+bun.lock
+  s_ab0b214f2d8517::t_b7269b3e76c706 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a3e713a36e7d29672fcf2be3a2ad39e58cb11b5e",
+  "prompts": {},
+  "sessions": {
+    "s_0bb7ed275b9f2b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f713ec3fcffevX5DDXUjZYKZ21",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_2cdbde5229750b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f72bbf387ffevA9uUMppOnbah9",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_6fac84777ad99f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f72cbdec4ffeo6Ru0DmKGRDOQJ",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_74df9d42aa9478": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f72f4aa83ffeiEllSR50m5M2jg",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_85b2652eb278fc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f7130ee1cffe89nKTfRqx0kiMx",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_ab0b214f2d8517": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f71449e5effeycQMcDENkXARUI",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_c5e1957ea68f77": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f72ab1644ffeR4BAEHo8EjLZaD",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_e7844c8b5cffdd": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f7347fc1fffeDW8dgC7olbeNpX",
+        "model": "claude-opus-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_f5968c37bf1f0d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f713afc4affe4UKeRcyek2Zgqy",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    },
+    "s_fa8598e13e2e2d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f72dbde0cffemHKz401BbPAbxg",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    }
+  }
+}
