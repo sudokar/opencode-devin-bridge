@@ -1,14 +1,14 @@
 {
-  "name": "opencode-devin-auth",
-  "version": "0.1.0",
-  "description": "OpenCode plugin for Windsurf/Codeium authentication - use Windsurf models in OpenCode",
+  "name": "opencode-devin-bridge",
+  "version": "1.0.0-beta",
+  "description": "OpenCode bridge for Devin models",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sudokar/opencode-devin-auth.git"
+    "url": "git+https://github.com/sudokar/opencode-devin-bridge.git"
   },
-  "homepage": "https://github.com/sudokar/opencode-devin-auth#readme",
+  "homepage": "https://github.com/sudokar/opencode-devin-bridge#readme",
   "bugs": {
-    "url": "https://github.com/sudokar/opencode-devin-auth/issues"
+    "url": "https://github.com/sudokar/opencode-devin-bridge/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -20,7 +20,7 @@
     }
   },
   "bin": {
-    "opencode-devin-auth": "./dist/src/cli.js"
+    "opencode-devin-bridge": "./dist/src/cli.js"
   },
   "files": [
     "dist"
@@ -37,9 +37,8 @@
   },
   "keywords": [
     "opencode",
-    "windsurf",
-    "codeium",
-    "cascade",
+    "devin",
+    "bridge",
     "ai",
     "plugin",
     "authentication"

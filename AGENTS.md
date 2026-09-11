@@ -4,7 +4,7 @@ Guidance for AI agents working with this repository.
 
 ## Overview
 
-This is an **OpenCode plugin** that enables authentication with Windsurf/Codeium's local language server. It allows access to 90+ models including `swe-1.5`, `claude-4.5-sonnet`, `gpt-5`, and others available through Windsurf.
+This is an **OpenCode plugin** that bridges Devin models into OpenCode. Which models are available is derived from the user's own Devin account rather than a list maintained in this repository — run `opencode-devin-bridge sync-models` to refresh it.
 
 **Key insight**: Windsurf's Cascade chat uses **local gRPC** to communicate with a `language_server` child process. As of 0.3, the plugin can drive that child itself instead of scraping a running Windsurf app — see [docs/OAUTH.md](docs/OAUTH.md). Cascade RPCs are NOT exposed on `server.codeium.com` (confirmed via curl probes — every `/exa.language_server_pb.LanguageServerService/*` returns 404 there), so the local language_server stays mandatory; we just spawn it ourselves with OAuth-issued credentials.
 
@@ -22,12 +22,12 @@ bun test         # Run tests
 ```
 src/
 ├── plugin.ts              # Main entry, OpenAI-compatible fetch handler
-├── cli.ts                 # `opencode-devin-auth` CLI: login/logout/whoami/status
+├── cli.ts                 # `opencode-devin-bridge` CLI: login/logout/whoami/status
 ├── constants.ts           # Plugin ID, gRPC service names
 ├── oauth/                 # NEW (0.3) — browser-based OAuth login flow
 │   ├── login.ts           # Loopback callback + manual-paste strategies
 │   ├── register-user.ts   # POST register.windsurf.com → {apiKey, name, apiServerUrl}
-│   ├── storage.ts         # ~/.config/opencode-devin-auth/credentials.json (mode 0600)
+│   ├── storage.ts         # ~/.config/opencode-devin-bridge/credentials.json (mode 0600)
 │   └── types.ts           # Region defaults, persisted-credentials shape
 └── plugin/
     ├── auth.ts                       # Legacy scrape-from-running-Windsurf path (still used as fallback)
@@ -137,17 +137,18 @@ To discover new models:
 grep -oE '[A-Z0-9_]+\s*=\s*[0-9]+' extension.js | grep -E 'CLAUDE|GPT|GEMINI|DEEPSEEK|SWE'
 ```
 
-## Supported Models (90+)
+## Model catalog
 
-| Category | Examples |
-|----------|----------|
-| **SWE** | `swe-1.5`, `swe-1.5-thinking` |
-| **Claude** | `claude-3.5-sonnet`, `claude-4-opus`, `claude-4.5-sonnet`, `claude-4.5-opus` |
-| **GPT** | `gpt-4o`, `gpt-4.5`, `gpt-5`, `gpt-5.2`, `gpt-5-codex` |
-| **O-Series** | `o1`, `o3`, `o3-mini`, `o3-pro`, `o4-mini` |
-| **Gemini** | `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.0-pro` |
-| **DeepSeek** | `deepseek-v3`, `deepseek-r1`, `deepseek-r1-fast` |
-| **Other** | `llama-3.3-70b`, `qwen-3-235b`, `grok-3`, `kimi-k2` |
+Which models are available comes from the user's own Devin account, not a list maintained in this repository. Run:
+
+```bash
+opencode-devin-bridge sync-models
+```
+
+to force an immediate refresh — it reports how many models were written, names what was added/removed, and tells you to restart opencode when the set actually changed.
+
+`sync-models` sources from the **Devin CLI** (`devin models list --format json`), which the bridge spawns as a child process. That CLI must be installed and authenticated in its own right, separately from `opencode-devin-bridge login` (which only authenticates the bridge's chat proxy, not the Devin CLI). A missing or unauthenticated Devin CLI makes `sync-models` fail with a distinguishing message and a non-zero exit status, leaving any previously persisted catalog untouched — it never tells the user to run `opencode-devin-bridge login` for this, since that command can't fix a Devin CLI problem.
+
 
 ## Current Status
 

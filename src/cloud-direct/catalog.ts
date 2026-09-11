@@ -239,7 +239,7 @@ export class ModelNotAvailableError extends Error {
           `(This message replaces Cognition's "an internal error occurred" — same root cause.)`
         : `Model uid "${modelUid}" is not listed in the Cognition catalog for your account. ` +
           `Either the UID has been retired upstream or your account/region doesn't serve it. ` +
-          `Run \`curl http://127.0.0.1:42100/v1/models\` to see the canonical names your plan accepts.`,
+          `Run \`curl http://127.0.0.1:42124/v1/models\` to see the canonical names your plan accepts.`,
     );
     this.name = 'ModelNotAvailableError';
   }

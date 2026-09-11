@@ -23,5 +23,7 @@ coverage/
 
 # Traffic captures
 captures/
-tests/fixtures/
+tests/fixtures/*
+!tests/fixtures/models/
+!tests/fixtures/models/**
 *.pcap

@@ -266,7 +266,7 @@ The path we took, condensed:
 
 | Capability | Status | Notes |
 |---|---|---|
-| OAuth login (browser) | ✅ shipped (`opencode-devin-auth login`) | `docs/OAUTH.md` |
+| OAuth login (browser) | ✅ shipped (`opencode-devin-bridge login`) | `docs/OAUTH.md` |
 | Mint short-lived `user_jwt` | ✅ shipped | `src/cloud-direct/auth.ts`, ~24-min TTL with refresh-60s-before-expiry cache |
 | Streaming chat (free models) | ✅ proven live with `swe-1-6` and `kimi-k2-6` | `tests/live/cloud-direct.ts`, `tests/live/oauth-e2e.ts` |
 | OpenAI-style `/v1/chat/completions` SSE | ✅ shipped | `src/plugin.ts`, mode auto-routes when `OPENCODE_WINDSURF_AUTH_MODE=cloud-direct` |

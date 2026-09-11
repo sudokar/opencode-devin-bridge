@@ -41,7 +41,7 @@ export interface PersistedCredentials extends OAuthLoginResult {
    * `opencode auth login` → authorize() flow (so opencode's auth.json is the
    * authoritative copy and `opencode auth logout windsurf` should mirror-clear
    * this file). False / absent for credentials written by our standalone
-   * `opencode-devin-auth login` CLI; those survive opencode auth state
+    * `opencode-devin-bridge login` CLI; those survive opencode auth state
    * changes.
    */
   syncedViaOpencodeAuth?: boolean;

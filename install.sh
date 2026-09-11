@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 #
-# opencode-devin-auth — one-line installer
+# opencode-devin-bridge — one-line installer
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash -s -- --no-login
-#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash -s -- --force
+#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-bridge/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-bridge/main/install.sh | bash -s -- --no-login
+#   curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-bridge/main/install.sh | bash -s -- --force
 #
 # What this does:
 #   1. Verifies opencode is on PATH (does NOT install opencode for you).
-#   2. Backs up ~/.config/opencode/opencode.json (or its XDG-resolved
+#   2. Verifies the separately authenticated Devin CLI can list models.
+#   3. Backs up ~/.config/opencode/opencode.json (or its XDG-resolved
 #      equivalent) before any edit.
-#   3. Merges these into your existing config — DOES NOT touch anything
+#   4. Merges these into your existing config — DOES NOT touch anything
 #      else you already had:
-#        - `"plugin": ["opencode-devin-auth@beta"]`  (additive)
-#        - `"provider.windsurf"`  (only if absent; --force overrides)
-#   4. Runs `opencode auth login --provider windsurf` to sign you in.
+#        - `"plugin": ["opencode-devin-bridge@beta"]`  (additive)
+#        - `"provider.devin"`  (only if absent; --force overrides)
+#   5. Runs `opencode auth login --provider devin` to sign you in.
 #      Skip with `--no-login`.
 #
 # What this script does NOT do (and why):
@@ -58,26 +59,27 @@ for arg in "$@"; do
       # which made `--help` print `sed: bash: No such file or directory`
       # in the documented one-line install path.
       cat <<'HELP'
-opencode-devin-auth installer
+opencode-devin-bridge installer
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-auth/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/sudokar/opencode-devin-bridge/main/install.sh | bash
   curl -fsSL .../install.sh | bash -s -- --no-login
   curl -fsSL .../install.sh | bash -s -- --force
 
 Options:
   --no-login   Skip the "opencode auth login" step at the end
-  --force      Overwrite an existing provider.windsurf block (default: keep yours)
+  --force      Overwrite an existing provider.devin block (default: keep yours)
   -h, --help   Show this message and exit
 
 What this does:
   1. Verifies opencode is on PATH (does not install opencode for you).
-  2. Backs up ~/.config/opencode/opencode.json before any edit.
-  3. Merges into your existing config (additive — your other settings
+  2. Verifies the Devin CLI can list the models available to your account.
+  3. Backs up ~/.config/opencode/opencode.json before any edit.
+  4. Merges into your existing config (additive — your other settings
      are untouched):
-       - "plugin": ["opencode-devin-auth@beta"]
-       - "provider.windsurf"  (only if absent, unless --force)
-  4. Runs "opencode auth login --provider windsurf" so you can sign in.
+       - "plugin": ["opencode-devin-bridge@beta"]
+       - "provider.devin"  (only if absent, unless --force)
+  5. Runs "opencode auth login --provider devin" so you can sign in.
 
 NO_COLOR=1 disables ANSI color output.
 HELP
@@ -88,8 +90,8 @@ HELP
 done
 
 # ── banner ───────────────────────────────────────────────────────────
-printf '\n%sopencode-devin-auth installer%s\n' "$BLUE" "$RESET"
-printf '%s%s%s\n\n' "$DIM" "Cognition (Windsurf) provider for opencode — cloud-direct, no IDE required" "$RESET"
+printf '\n%sopencode-devin-bridge installer%s\n' "$BLUE" "$RESET"
+printf '%s%s%s\n\n' "$DIM" "Devin provider for opencode — cloud-direct, no IDE required" "$RESET"
 
 # ── 1. opencode present? ─────────────────────────────────────────────
 #
@@ -184,7 +186,31 @@ OC_VERSION="$(printf '%s' "$OC_VERSION_RAW" | LC_ALL=C sed $'s/\033\\[[0-9;?]*[a
 [[ -z "$OC_VERSION" ]] && OC_VERSION="unknown"
 ok "opencode $OC_VERSION"
 
-# ── 2. pick a JSON-merge helper ──────────────────────────────────────
+# ── 2. Devin CLI preflight ────────────────────────────────────────────
+# JSON output avoids an interactive pager or TTY-specific table output.
+# This comes before resolving or creating the config directory, so a missing
+# or unauthenticated CLI leaves opencode untouched.
+log "Checking Devin CLI model access..."
+if ! command -v devin >/dev/null 2>&1; then
+  die "Devin CLI not found on PATH.
+
+Install the Devin CLI, authenticate it with your Devin account, then verify:
+  devin models list --format json
+
+This is separate from \`opencode auth login --provider devin\`; the installer
+needs the Devin CLI to seed the model catalog available to your account."
+fi
+if ! devin models list --format json >/dev/null 2>&1; then
+  die "Devin CLI could not list models (\`devin models list --format json\` failed).
+
+Authenticate or repair the Devin CLI, then verify the command succeeds:
+  devin models list --format json
+
+No opencode configuration was created or changed, and OAuth was not started."
+fi
+ok "Devin CLI can list models"
+
+# ── 3. pick a JSON-merge helper ──────────────────────────────────────
 log "Looking for a JSON-merge runtime..."
 if   command -v bun     >/dev/null 2>&1; then RUNTIME="bun";     RUNTIME_KIND="js"
 elif command -v node    >/dev/null 2>&1; then RUNTIME="node";    RUNTIME_KIND="js"
@@ -194,7 +220,7 @@ else
 fi
 ok "using $RUNTIME"
 
-# ── 3. find the right config file ────────────────────────────────────
+# ── 4. find the right config file ────────────────────────────────────
 #
 # Per https://opencode.ai/docs/config — the global user config path is
 # `~/.config/opencode/` on macOS, Linux, AND Windows. opencode does NOT
@@ -304,7 +330,7 @@ full; or you're over quota."
   ok "created fresh opencode.json (mode 0600)"
 fi
 
-# ── 4. backup ────────────────────────────────────────────────────────
+# ── 5. backup ────────────────────────────────────────────────────────
 # Append `$$` (PID) and `${RANDOM:-0}` so two concurrent runs in the same
 # wall-clock second don't overwrite each other's backups. `date +%N` for
 # nanoseconds isn't portable to macOS, so this is the safer alternative.
@@ -348,8 +374,8 @@ disk is full; $CONFIG is unreadable; or the directory is read-only."
 fi
 ok "backed up → $(basename "$BACKUP")"
 
-# ── 5. merge our recommended config ──────────────────────────────────
-log "Merging Windsurf provider + plugin entry..."
+# ── 6. merge our recommended config ──────────────────────────────────
+log "Merging Devin provider + plugin entry..."
 
 # Single source of truth for the merge logic. Both runtimes accept it via
 # stdin so we don't have to ship two copies of the model catalog.
@@ -405,98 +431,48 @@ if [[ "$RUNTIME_KIND" == "js" ]]; then
     // an object) from a hand-edited config; we coerce to an empty array
     // so the `.some()` + `.push()` calls below work without crashing.
     if (!Array.isArray(cur.plugin)) cur.plugin = [];
-    const PLUGIN = "opencode-devin-auth@beta";
+    const PLUGIN = "opencode-devin-bridge@beta";
     // `@[^/]*$` strips ONLY a trailing `@version` suffix; `@.*$` would
     // greedily consume the leading `@` of any hypothetical future scoped
-    // form like `@cognition/opencode-devin-auth`, collapsing to ""
+    // form like `@cognition/opencode-devin-bridge`, collapsing to ""
     // and breaking dedup. We do not currently publish under a scope,
     // but this is cheap defense for when we might.
-    if (!cur.plugin.some((p) => typeof p === "string" && p.replace(/@[^/]*$/, "") === "opencode-devin-auth")) {
+    if (!cur.plugin.some((p) => typeof p === "string" && p.replace(/@[^/]*$/, "") === "opencode-devin-bridge")) {
       cur.plugin.push(PLUGIN);
     }
 
-    // provider.windsurf — only write if absent (or --force given).
+    // provider.devin — only write if absent (or --force given). The model
+    // list is NOT written here: the plugin advertises models to opencode
+    // itself, read from the persisted catalog (`opencode-devin-bridge
+    // sync-models`), so a static list here would immediately go stale.
     // Defensive normalization: `cur.provider || {}` would leave a truthy
-    // primitive (e.g. string) intact, and `cur.provider.windsurf = ...`
+    // primitive (e.g. string) intact, and `cur.provider.devin = ...`
     // would silently no-op on a non-object in non-strict mode. Coerce
-    // to a plain object first. Also treat `windsurf: null` (or any
-    // non-object windsurf value) as ABSENT so we replace the broken
+    // to a plain object first. Also treat `devin: null` (or any
+    // non-object devin value) as ABSENT so we replace the broken
     // entry rather than confusingly preserve it.
     if (!cur.provider || typeof cur.provider !== "object" || Array.isArray(cur.provider)) {
       cur.provider = {};
     }
-    const existingWindsurf = cur.provider.windsurf;
-    const has = existingWindsurf && typeof existingWindsurf === "object" && !Array.isArray(existingWindsurf);
-    // `had` distinguishes "windsurf was present but malformed (null,
-    // array, primitive)" from "windsurf was truly absent" — only
+    const existingDevin = cur.provider.devin;
+    const has = existingDevin && typeof existingDevin === "object" && !Array.isArray(existingDevin);
+    // `had` distinguishes "devin was present but malformed (null,
+    // array, primitive)" from "devin was truly absent" — only
     // matters for the log message wording at the bottom of this branch.
-    const had = existingWindsurf !== undefined;
+    const had = existingDevin !== undefined;
     if (!has || force) {
-      cur.provider.windsurf = {
-        name: "Cognition (Windsurf)",
+      cur.provider.devin = {
+        name: "Devin",
         npm: "@ai-sdk/openai-compatible",
-        options: { baseURL: "http://127.0.0.1:42100/v1" },
-        models: {
-          "claude-opus-4.7": {
-            name: "Claude Opus 4.7",
-            limit: { context: 1000000, output: 128000 },
-            attachment: true,
-            modalities: { input: ["text", "image"], output: ["text"] },
-            variants: {
-              low: {}, medium: {}, high: {}, xhigh: {}, max: {},
-              "low-fast": {}, "medium-fast": {}, "high-fast": {}, "xhigh-fast": {}, "max-fast": {},
-            },
-          },
-          "gpt-5.5": {
-            name: "GPT 5.5",
-            limit: { context: 1050000, output: 128000 },
-            attachment: true,
-            modalities: { input: ["text", "image"], output: ["text"] },
-            variants: {
-              none: {}, low: {}, medium: {}, high: {}, xhigh: {},
-              "none-priority": {}, "low-priority": {}, "medium-priority": {}, "high-priority": {}, "xhigh-priority": {},
-            },
-          },
-          "kimi-k2.6": {
-            name: "Kimi K2.6",
-            limit: { context: 262144, output: 262144 },
-            attachment: true,
-            modalities: { input: ["text", "image"], output: ["text"] },
-          },
-          "gemini-3.5-flash": {
-            name: "Gemini 3.5 Flash",
-            limit: { context: 1048576, output: 65536 },
-            attachment: true,
-            modalities: { input: ["text", "image"], output: ["text"] },
-            variants: { minimal: {}, low: {}, medium: {}, high: {} },
-          },
-          "claude-opus-4.6": {
-            name: "Claude Opus 4.6",
-            limit: { context: 1000000, output: 128000 },
-            attachment: true,
-            modalities: { input: ["text", "image"], output: ["text"] },
-            variants: { thinking: {}, "1m": {}, "thinking-1m": {}, fast: {}, "thinking-fast": {} },
-          },
-          "swe-1.6": {
-            name: "SWE 1.6",
-            limit: { context: 1000000, output: 128000 },
-            attachment: true,
-            modalities: { input: ["text", "image"], output: ["text"] },
-            variants: { fast: {}, "fast-low": {}, "fast-medium": {}, "fast-high": {} },
-          },
-          "deepseek-v4": {
-            name: "DeepSeek V4",
-            limit: { context: 1000000, output: 384000 },
-          },
-        },
+        options: { baseURL: "http://127.0.0.1:42124/v1" },
       };
       console.error(
-        has  ? "  (--force: overwrote existing provider.windsurf)" :
-        had  ? "  (replaced malformed provider.windsurf — was not a valid object)" :
-               "  (added provider.windsurf)"
+        has  ? "  (--force: overwrote existing provider.devin)" :
+        had  ? "  (replaced malformed provider.devin — was not a valid object)" :
+               "  (added provider.devin)"
       );
     } else {
-      console.error("  (kept your existing provider.windsurf — re-run with --force to replace)");
+      console.error("  (kept your existing provider.devin — re-run with --force to replace)");
     }
 
     // Atomic write: serialize to a sibling tmp file, then rename. fs.rename
@@ -586,86 +562,37 @@ if not isinstance(cur.get("$schema"), str) or not cur["$schema"]:
 if not isinstance(cur.get("plugin"), list):
     cur["plugin"] = []
 # Use `@[^/]*$` (matches JS branch): strips ONLY trailing @version, not
-# a scope-prefixing @ inside e.g. @scope/opencode-devin-auth.
-if not any(isinstance(p, str) and re.sub(r"@[^/]*$", "", p) == "opencode-devin-auth" for p in cur["plugin"]):
-    cur["plugin"].append("opencode-devin-auth@beta")
+# a scope-prefixing @ inside e.g. @scope/opencode-devin-bridge.
+if not any(isinstance(p, str) and re.sub(r"@[^/]*$", "", p) == "opencode-devin-bridge" for p in cur["plugin"]):
+    cur["plugin"].append("opencode-devin-bridge@beta")
 
 if not isinstance(cur.get("provider"), dict):
     cur["provider"] = {}
-# Treat windsurf: None (or any non-dict value) as ABSENT so we replace
+# provider.devin — only write if absent (or --force given). The model list
+# is NOT written here: the plugin advertises models to opencode itself,
+# read from the persisted catalog (`opencode-devin-bridge sync-models`), so
+# a static list here would immediately go stale.
+# Treat devin: None (or any non-dict value) as ABSENT so we replace
 # the broken entry rather than confusingly preserve it.
-existing_windsurf = cur["provider"].get("windsurf")
-has = isinstance(existing_windsurf, dict)
-# `had` distinguishes "windsurf was present but malformed" from "absent"
+existing_devin = cur["provider"].get("devin")
+has = isinstance(existing_devin, dict)
+# `had` distinguishes "devin was present but malformed" from "absent"
 # — only matters for the log message wording.
-had = "windsurf" in cur["provider"]
+had = "devin" in cur["provider"]
 if (not has) or force:
-    cur["provider"]["windsurf"] = {
-        "name": "Cognition (Windsurf)",
+    cur["provider"]["devin"] = {
+        "name": "Devin",
         "npm": "@ai-sdk/openai-compatible",
-        "options": {"baseURL": "http://127.0.0.1:42100/v1"},
-        "models": {
-            "claude-opus-4.7": {
-                "name": "Claude Opus 4.7",
-                "limit": {"context": 1000000, "output": 128000},
-                "attachment": True,
-                "modalities": {"input": ["text", "image"], "output": ["text"]},
-                "variants": {
-                    "low": {}, "medium": {}, "high": {}, "xhigh": {}, "max": {},
-                    "low-fast": {}, "medium-fast": {}, "high-fast": {}, "xhigh-fast": {}, "max-fast": {},
-                },
-            },
-            "gpt-5.5": {
-                "name": "GPT 5.5",
-                "limit": {"context": 1050000, "output": 128000},
-                "attachment": True,
-                "modalities": {"input": ["text", "image"], "output": ["text"]},
-                "variants": {
-                    "none": {}, "low": {}, "medium": {}, "high": {}, "xhigh": {},
-                    "none-priority": {}, "low-priority": {}, "medium-priority": {}, "high-priority": {}, "xhigh-priority": {},
-                },
-            },
-            "kimi-k2.6": {
-                "name": "Kimi K2.6",
-                "limit": {"context": 262144, "output": 262144},
-                "attachment": True,
-                "modalities": {"input": ["text", "image"], "output": ["text"]},
-            },
-            "gemini-3.5-flash": {
-                "name": "Gemini 3.5 Flash",
-                "limit": {"context": 1048576, "output": 65536},
-                "attachment": True,
-                "modalities": {"input": ["text", "image"], "output": ["text"]},
-                "variants": {"minimal": {}, "low": {}, "medium": {}, "high": {}},
-            },
-            "claude-opus-4.6": {
-                "name": "Claude Opus 4.6",
-                "limit": {"context": 1000000, "output": 128000},
-                "attachment": True,
-                "modalities": {"input": ["text", "image"], "output": ["text"]},
-                "variants": {"thinking": {}, "1m": {}, "thinking-1m": {}, "fast": {}, "thinking-fast": {}},
-            },
-            "swe-1.6": {
-                "name": "SWE 1.6",
-                "limit": {"context": 1000000, "output": 128000},
-                "attachment": True,
-                "modalities": {"input": ["text", "image"], "output": ["text"]},
-                "variants": {"fast": {}, "fast-low": {}, "fast-medium": {}, "fast-high": {}},
-            },
-            "deepseek-v4": {
-                "name": "DeepSeek V4",
-                "limit": {"context": 1000000, "output": 384000},
-            },
-        },
+        "options": {"baseURL": "http://127.0.0.1:42124/v1"},
     }
     if has:
-        print("  (--force: overwrote existing provider.windsurf)", file=sys.stderr)
+        print("  (--force: overwrote existing provider.devin)", file=sys.stderr)
     elif had:
-        print("  (replaced malformed provider.windsurf — was not a valid object)", file=sys.stderr)
+        print("  (replaced malformed provider.devin — was not a valid object)", file=sys.stderr)
     else:
-        print("  (added provider.windsurf)", file=sys.stderr)
+        print("  (added provider.devin)", file=sys.stderr)
 else:
-    print("  (kept your existing provider.windsurf — re-run with --force to replace)", file=sys.stderr)
+    print("  (kept your existing provider.devin — re-run with --force to replace)", file=sys.stderr)
 
 # Atomic write: serialize to a tmp file then `os.replace` (atomic rename
 # on POSIX). See the JS branch for the same pattern + rationale.
@@ -726,21 +653,36 @@ is healthy on PATH and re-run."
 fi
 ok "opencode.json updated"
 
-# ── 6. sign in ────────────────────────────────────────────────────────
+# ── 7. sign in ────────────────────────────────────────────────────────
 if (( LOGIN )); then
   echo
   log "Launching opencode auth login..."
-  log "A browser tab will open. Sign in with your Windsurf account."
+  log "A browser tab will open. Sign in with your Devin account."
   echo
   # --provider skips the picker and goes straight to our oauth flow
-  if opencode auth login --provider windsurf; then
+  if opencode auth login --provider devin; then
     ok "signed in"
+    # auth login makes opencode resolve the configured plugin into its package
+    # cache. Run its package-manager-generated executable shim directly; never
+    # invoke npm/npx here because a registry lookup for a beta package can fail
+    # after sign-in.
+    BRIDGE_BIN="${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/opencode-devin-bridge@beta/node_modules/.bin/opencode-devin-bridge"
+    if [[ -x "$BRIDGE_BIN" ]]; then
+      log "Refreshing your Devin model catalog..."
+      if "$BRIDGE_BIN" sync-models; then
+        ok "model catalog refreshed"
+      else
+        warn "could not refresh the model catalog; run \`opencode-devin-bridge sync-models\` after authenticating the Devin CLI"
+      fi
+    else
+      warn "the installed opencode-devin-bridge CLI executable was not found in opencode's cache; model catalog refresh was skipped"
+    fi
   else
-    warn "auth login didn't complete cleanly — you can re-run \`opencode auth login --provider windsurf\` any time"
+    warn "auth login didn't complete cleanly — you can re-run \`opencode auth login --provider devin\` any time"
   fi
 fi
 
-# ── 7. done ──────────────────────────────────────────────────────────
+# ── 8. done ──────────────────────────────────────────────────────────
 #
 # We build the restore command via `printf %q` rather than embedding
 # "$BACKUP"/"$CONFIG" directly in a heredoc. If a path contains `$`,
@@ -754,9 +696,9 @@ RESTORE_CONFIG_Q=$(printf '%q' "$CONFIG")
 
 printf '\n%s🎉  Installation complete.%s\n\n' "$GREEN" "$RESET"
 printf '%sTry it:%s\n'   "$BLUE"  "$RESET"
-printf '  opencode run --model=windsurf/swe-1.6 "hi"\n'
-printf '  opencode run --model=windsurf/kimi-k2.6 -f screenshot.png -- "describe this image"\n'
-printf '  opencode run --model=windsurf/claude-opus-4.7:high "what does this codebase do?"\n\n'
+printf '  opencode run --model=devin/swe-1.6 "hi"\n'
+printf '  opencode run --model=devin/kimi-k2.6 -f screenshot.png -- "describe this image"\n'
+printf '  opencode run --model=devin/claude-opus-4.7:high "what does this codebase do?"\n\n'
 printf '%sAnything broken?%s\n' "$BLUE"  "$RESET"
 printf '  • Restore your previous config:  cp %s %s\n' "$RESTORE_BACKUP_Q" "$RESTORE_CONFIG_Q"
-printf '  • Open an issue:  https://github.com/sudokar/opencode-devin-auth/issues\n\n'
+printf '  • Open an issue:  https://github.com/sudokar/opencode-devin-bridge/issues\n\n'

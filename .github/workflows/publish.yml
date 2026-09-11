@@ -6,7 +6,7 @@ name: Publish to npm
 #   3. `npm publish --provenance --tag beta` publishes the version AND
 #      atomically sets the `beta` dist-tag via the OIDC-authenticated
 #      Trusted Publisher token (no long-lived secret needed).
-#   4. `npm dist-tag add opencode-devin-auth@<v> latest` then ALSO
+#   4. `npm dist-tag add opencode-devin-bridge@<v> latest` then ALSO
 #      points `latest` at the new version, using the long-lived
 #      `NPM_TOKEN` (an MFA-bypass automation token scoped to this
 #      package). `continue-on-error: true` so this step failing
@@ -23,9 +23,9 @@ name: Publish to npm
 #   - `npm publish --tag beta` uses npm Trusted Publisher (OIDC). No
 #     long-lived secret — `id-token: write` is the only permission needed.
 #     Configure the publisher once at:
-#       https://www.npmjs.com/package/opencode-devin-auth/access
-#     Publisher = GitHub Actions, org = rsvedant,
-#     repo = opencode-devin-auth, workflow filename = publish.yml.
+#       https://www.npmjs.com/package/opencode-devin-bridge/access
+#     Publisher = GitHub Actions, org = sudokar,
+#     repo = opencode-devin-bridge, workflow filename = publish.yml.
 #   - `npm dist-tag add` (the second step) needs `NPM_TOKEN` because
 #     npm Trusted Publisher OIDC tokens are scoped to `publish` only.
 #     Token is a granular access token scoped to this package, with
@@ -96,8 +96,8 @@ jobs:
       - name: Refuse to publish a version that already exists
         if: ${{ inputs.dry_run != true }}
         run: |
-          if npm view "opencode-devin-auth@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
-            echo "::error::opencode-devin-auth@${{ steps.version.outputs.version }} is already published. Bump package.json and re-tag."
+          if npm view "opencode-devin-bridge@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+            echo "::error::opencode-devin-bridge@${{ steps.version.outputs.version }} is already published. Bump package.json and re-tag."
             exit 1
           fi
 
@@ -129,19 +129,19 @@ jobs:
         # token expired), the publish itself is unaffected.
         continue-on-error: true
         run: |
-          npm dist-tag add "opencode-devin-auth@${{ steps.version.outputs.version }}" latest
+          npm dist-tag add "opencode-devin-bridge@${{ steps.version.outputs.version }}" latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Summary
         run: |
           {
-              echo "## opencode-devin-auth publish"
+              echo "## opencode-devin-bridge publish"
             echo ""
             if [[ "${{ inputs.dry_run }}" == "true" ]]; then
               echo "**Dry run** — would have published \`${{ steps.version.outputs.version }}\` and pointed both \`beta\` + \`latest\` at it."
             else
-              echo "Published \`opencode-devin-auth@${{ steps.version.outputs.version }}\`."
+              echo "Published \`opencode-devin-bridge@${{ steps.version.outputs.version }}\`."
               echo ""
               echo "| dist-tag | version |"
               echo "|----------|---------|"
@@ -149,7 +149,7 @@ jobs:
               echo "| beta     | ${{ steps.version.outputs.version }} |"
               echo ""
               echo "Install:"
-              echo "- \`bun add opencode-devin-auth\` (latest)"
-              echo "- \`bun add opencode-devin-auth@beta\` (beta)"
+              echo "- \`bun add opencode-devin-bridge\` (latest)"
+              echo "- \`bun add opencode-devin-bridge@beta\` (beta)"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
