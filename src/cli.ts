@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * opencode-devin-auth CLI entry point.
+ * opencode-devin-bridge CLI entry point.
  *
  * Subcommands:
  *   login [--manual] [--signup] [--email <addr>] [--portal-url <https://...>]
@@ -24,6 +24,12 @@ import { login, type LoginOptions } from './oauth/login.js';
 import { deleteCredentials, getCredentialsPath, loadCredentials } from './oauth/storage.js';
 import { DEFAULT_REGION, type WindsurfRegion } from './oauth/types.js';
 import { WindsurfRegistrationError } from './oauth/register-user.js';
+import { refreshCatalog } from './models/refresh.js';
+import { loadCatalog } from './models/store.js';
+import type { RefreshOutcome } from './models/types.js';
+import { realpathSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 interface ParsedArgs {
   subcommand: string;
@@ -113,13 +119,14 @@ function regionFromArgs(args: ParsedArgs): WindsurfRegion {
 
 function usage(): string {
   return `\
-  opencode-devin-auth — Windsurf OAuth login for the opencode plugin
+  opencode-devin-bridge — Devin bridge login for the opencode plugin
 
 Usage:
-  opencode-devin-auth login [--manual] [--signup] [--email <addr>] [--portal-url <url>]
-  opencode-devin-auth logout
-  opencode-devin-auth whoami
-  opencode-devin-auth status
+  opencode-devin-bridge login [--manual] [--signup] [--email <addr>] [--portal-url <url>]
+  opencode-devin-bridge logout
+  opencode-devin-bridge whoami
+  opencode-devin-bridge status
+  opencode-devin-bridge sync-models
 
 Login options:
   --manual              Force manual-paste flow (no localhost callback).
@@ -132,7 +139,11 @@ Credentials are stored at:
 `;
 }
 
-async function cmdLogin(args: ParsedArgs): Promise<number> {
+export async function cmdLogin(
+  args: ParsedArgs,
+  loginFn: (opts: LoginOptions) => ReturnType<typeof login> = login,
+  refresh: () => Promise<RefreshOutcome> = refreshCatalog,
+): Promise<number> {
   const region = regionFromArgs(args);
   const opts: LoginOptions = {
     region,
@@ -147,14 +158,21 @@ async function cmdLogin(args: ParsedArgs): Promise<number> {
   };
 
   console.log(args.manual
-    ? 'Starting Windsurf sign-in (manual-paste flow)…'
-    : 'Starting Windsurf sign-in (loopback callback)…');
+    ? 'Starting Devin sign-in (manual-paste flow)…'
+    : 'Starting Devin sign-in (loopback callback)…');
 
   try {
-    const result = await login(opts);
+    const result = await loginFn(opts);
     console.log(`\nSigned in as: ${result.name}`);
     console.log(`API server   : ${result.apiServerUrl}`);
     console.log(`Credentials  : ${getCredentialsPath()}`);
+    const outcome = await refresh();
+    if (!outcome.ok) {
+      console.warn(
+        `\nWarning: could not refresh the model catalog (${outcome.reason}). ` +
+        'Run `opencode-devin-bridge sync-models` to try again.',
+      );
+    }
     return 0;
   } catch (err) {
     if (err instanceof WindsurfRegistrationError) {
@@ -181,7 +199,7 @@ function cmdLogout(): number {
 function cmdWhoami(): number {
   const creds = loadCredentials();
   if (!creds) {
-    console.error('Not logged in. Run `opencode-devin-auth login`.');
+    console.error('Not logged in. Run `opencode-devin-bridge login`.');
     return 1;
   }
   console.log(`Name       : ${creds.name}`);
@@ -213,6 +231,49 @@ function cmdStatus(): number {
   return 0;
 }
 
+export async function cmdSyncModels(
+  refresh: () => Promise<RefreshOutcome> = refreshCatalog,
+): Promise<number> {
+  const outcome = await refresh();
+  if (!outcome.ok) {
+    reportSyncModelsFailure(outcome.reason);
+    return 1;
+  }
+
+  console.log(`Wrote ${outcome.total} models.`);
+  if (outcome.added.length > 0) console.log(`Added   : ${outcome.added.join(', ')}`);
+  if (outcome.removed.length > 0) console.log(`Removed : ${outcome.removed.join(', ')}`);
+
+  const changed = outcome.added.length > 0 || outcome.removed.length > 0;
+  console.log(changed ? 'Restart opencode to see the updated model list.' : 'Nothing changed.');
+  return 0;
+}
+
+function reportSyncModelsFailure(reason: Extract<RefreshOutcome, { ok: false }>['reason']): void {
+  switch (reason) {
+    case 'not-installed':
+      console.error('The Devin CLI could not be found.');
+      console.error('Install the Devin CLI, then run this command again.');
+      break;
+    case 'not-authenticated':
+      console.error('The Devin CLI is not authenticated.');
+      console.error('Authenticate the Devin CLI with its own login command, then run this command again.');
+      break;
+    case 'unreachable':
+      console.error('The model list could not be retrieved: the source is unreachable.');
+      break;
+    case 'bad-output':
+      console.error('The model list could not be retrieved: the Devin CLI returned output that could not be parsed.');
+      break;
+    case 'empty':
+      console.error('The model list could not be retrieved: the Devin CLI reported zero models.');
+      break;
+  }
+  if (loadCatalog()) {
+    console.error('The existing model list was left unchanged.');
+  }
+}
+
 async function main(): Promise<number> {
   let args: ParsedArgs;
   try {
@@ -237,6 +298,8 @@ async function main(): Promise<number> {
       return cmdWhoami();
     case 'status':
       return cmdStatus();
+    case 'sync-models':
+      return cmdSyncModels();
     default:
       console.error(`Unknown subcommand: ${args.subcommand}`);
       console.error(usage());
@@ -262,11 +325,27 @@ async function flushStreams(): Promise<void> {
   await Promise.all([drain(process.stdout), drain(process.stderr)]);
 }
 
-main().then(
-  async (code) => { await flushStreams(); process.exit(code); },
-  async (err) => {
-    console.error('Fatal:', err);
-    await flushStreams();
-    process.exit(1);
-  },
-);
+/** True only when this module's file was passed to the current runtime. */
+export function isDirectExecution(argv1: string | undefined, moduleUrl: string): boolean {
+  if (!argv1) return false;
+  try {
+    // Canonicalize both paths so relative invocations and npm's symlinked bin
+    // launcher behave the same under Node ESM and Bun.
+    return realpathSync(resolve(argv1)) === realpathSync(fileURLToPath(moduleUrl));
+  } catch {
+    return false;
+  }
+}
+
+// Guarded so importing this module (e.g. from unit tests) doesn't also run
+// the CLI and call process.exit — only running it directly as a script does.
+if (isDirectExecution(process.argv[1], import.meta.url)) {
+  main().then(
+    async (code) => { await flushStreams(); process.exit(code); },
+    async (err) => {
+      console.error('Fatal:', err);
+      await flushStreams();
+      process.exit(1);
+    },
+  );
+}

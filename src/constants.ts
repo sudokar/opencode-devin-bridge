@@ -175,13 +175,13 @@ export const DEFAULT_LANGUAGE_SERVER_PORT = 0;
 export const LANGUAGE_SERVER_BINARY = '/Applications/Windsurf.app/Contents/Resources/app/extensions/windsurf/bin/language_server_macos_arm';
 
 /** Plugin identifier */
-export const PLUGIN_ID = 'windsurf';
+export const PLUGIN_ID = 'devin';
 
 /** Storage file name */
 export const ACCOUNTS_FILE = 'windsurf-accounts.json';
 
 /** User agent for requests */
-export const USER_AGENT = 'opencode-devin-auth/0.1.0';
+export const USER_AGENT = 'opencode-devin-bridge/1.0.0-beta';
 
 // ============================================================================
 // Headers

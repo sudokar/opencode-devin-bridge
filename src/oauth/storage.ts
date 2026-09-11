@@ -1,12 +1,9 @@
 /**
  * On-disk credential storage for the OAuth flow.
  *
- * Path: `$XDG_CONFIG_HOME/opencode-devin-auth/credentials.json` —
- * verified that on the actual `xdg-basedir` package, `xdgConfig` resolves
- * to `~/.config/opencode-devin-auth` on Linux AND macOS (the package
- * doesn't follow the Cocoa "Library/Application Support" convention even
- * on macOS). Windows falls through to `~/.config` via our manual fallback
- * since xdgConfig is undefined there.
+ * Path: `$XDG_CONFIG_HOME/opencode-devin-bridge/credentials.json`.
+ * Legacy `opencode-devin-auth` state is migrated on first read when no valid
+ * bridge state exists. New state always wins.
  *
  * We deliberately store on disk (mode 0600) rather than in the OS keychain
  * because:
@@ -28,20 +25,25 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { xdgConfig } from 'xdg-basedir';
+import { withFileLock, withFileLockSync, writeFileAtomically } from '../lib/atomic-file.js';
 import type { PersistedCredentials } from './types.js';
 
-const APP_DIR_NAME = 'opencode-devin-auth';
+const APP_DIR_NAME = 'opencode-devin-bridge';
+const LEGACY_APP_DIR_NAME = 'opencode-devin-auth';
 const CREDS_FILENAME = 'credentials.json';
 
 export function getCredentialsDir(): string {
-  // xdgConfig is undefined on Windows; pick a sensible per-user fallback.
-  const base = xdgConfig ?? path.join(os.homedir(), '.config');
+  const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
   return path.join(base, APP_DIR_NAME);
 }
 
 export function getCredentialsPath(): string {
   return path.join(getCredentialsDir(), CREDS_FILENAME);
+}
+
+function getLegacyCredentialsPath(): string {
+  const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
+  return path.join(base, LEGACY_APP_DIR_NAME, CREDS_FILENAME);
 }
 
 function ensureDir(): void {
@@ -52,7 +54,7 @@ function ensureDir(): void {
 /**
  * Atomically write credentials with file mode 0600.
  *
- * Strategy:
+ * Strategy (shared with `models/store.ts` via `lib/atomic-file.ts`):
  *   1. Create an O_EXCL lockfile (`credentials.json.lock`) — fails fast if
  *      another writer is in the middle of an update. We retry with backoff
  *      a handful of times before giving up.
@@ -65,82 +67,13 @@ function ensureDir(): void {
  * prior writer crashed and steal it.
  */
 const LOCK_FILENAME = 'credentials.json.lock';
-const LOCK_STALE_MS = 30_000;
-const LOCK_RETRY_BASE_MS = 80;
-const LOCK_RETRIES = 6;
-
-async function withLock<T>(fn: () => Promise<T> | T): Promise<T> {
-  const dir = getCredentialsDir();
-  const lockPath = path.join(dir, LOCK_FILENAME);
-
-  for (let attempt = 0; attempt <= LOCK_RETRIES; attempt++) {
-    try {
-      const fd = fs.openSync(lockPath, fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_WRONLY, 0o600);
-      fs.writeSync(fd, `${process.pid}\n`);
-      fs.closeSync(fd);
-      try {
-        return await fn();
-      } finally {
-        try { fs.unlinkSync(lockPath); } catch { /* ok */ }
-      }
-    } catch (err) {
-      const code =
-        err instanceof Error && 'code' in err
-          ? (err as NodeJS.ErrnoException).code
-          : undefined;
-      if (code !== 'EEXIST') throw err;
-      // Check staleness — steal a lock older than LOCK_STALE_MS.
-      try {
-        const st = fs.statSync(lockPath);
-        if (Date.now() - st.mtimeMs > LOCK_STALE_MS) {
-          fs.unlinkSync(lockPath);
-          continue;
-        }
-      } catch { /* race: lock disappeared, loop and retry */ }
-      if (attempt === LOCK_RETRIES) {
-        throw new Error(`Could not acquire credentials lock at ${lockPath}. Another process is writing.`);
-      }
-      const wait = LOCK_RETRY_BASE_MS * Math.pow(1.5, attempt);
-      await new Promise((r) => setTimeout(r, wait));
-    }
-  }
-  // Unreachable
-  throw new Error('lock acquisition exhausted retries');
-}
 
 export async function saveCredentials(creds: PersistedCredentials): Promise<void> {
   ensureDir();
   const finalPath = getCredentialsPath();
-  await withLock(() => {
-    // O_EXCL on the tmp file so a pre-placed symlink with the same name
-    // can't redirect the write outside the credentials dir. The pid
-    // suffix makes the tmp name process-scoped but it isn't unguessable
-    // — without O_EXCL an attacker who knows the pid (every local process
-    // does, via ps) could plant a symlink between ensureDir and write.
-    const tmpPath = `${finalPath}.${process.pid}.tmp`;
-    // Best-effort cleanup of any leftover tmp from a prior crash. We
-    // unlink (not stat-and-decide) so a hostile symlink gets dropped.
-    try { fs.unlinkSync(tmpPath); } catch { /* not there, fine */ }
-    // O_NOFOLLOW so a pre-placed symlink at tmpPath can't redirect the
-    // open into /etc/<wherever>. Combined with O_EXCL this means an
-    // attacker can't get our write to land anywhere except a brand-new
-    // regular file inside the credentials directory.
-    const noFollow = (fs.constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
-    const fd = fs.openSync(
-      tmpPath,
-      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | noFollow,
-      0o600,
-    );
-    try {
-      fs.writeSync(fd, JSON.stringify(creds, null, 2));
-    } finally {
-      fs.closeSync(fd);
-    }
-    fs.renameSync(tmpPath, finalPath);
-    // Re-apply 0600 in case umask widened the rename target's mode
-    // (POSIX rename preserves the source's mode on Linux/macOS; this is
-    // defense in depth for the Windows fallback path).
-    try { fs.chmodSync(finalPath, 0o600); } catch { /* ok */ }
+  const lockPath = path.join(getCredentialsDir(), LOCK_FILENAME);
+  await withFileLock(lockPath, () => {
+    writeFileAtomically(finalPath, JSON.stringify(creds, null, 2), 0o600);
   });
 }
 
@@ -151,7 +84,26 @@ export async function saveCredentials(creds: PersistedCredentials): Promise<void
  */
 export function loadCredentials(): PersistedCredentials | null {
   const p = getCredentialsPath();
-  if (!fs.existsSync(p)) return null;
+  if (fs.existsSync(p)) return readCredentials(p);
+
+  const legacyPath = getLegacyCredentialsPath();
+  if (!fs.existsSync(legacyPath)) return null;
+  ensureDir();
+  return withFileLockSync(path.join(getCredentialsDir(), LOCK_FILENAME), () => {
+    // A concurrent login may have won while this process waited for the lock.
+    if (fs.existsSync(p)) return readCredentials(p);
+    if (!fs.existsSync(legacyPath)) return null;
+    const legacy = readCredentials(legacyPath);
+    if (!legacy) return null;
+    writeFileAtomically(p, JSON.stringify(legacy, null, 2), 0o600);
+    // Delete only after the atomic new-state write, preventing logout from
+    // resurrecting an old credential on its next read.
+    fs.unlinkSync(legacyPath);
+    return legacy;
+  });
+}
+
+function readCredentials(p: string): PersistedCredentials | null {
   // Permission check — refuse to load a credentials file that's wider than
   // 0600. A previously-leaked file with mode 0644 (e.g. created before our
   // tightened write path, or copied by a misconfigured backup script)
@@ -184,7 +136,7 @@ export function loadCredentials(): PersistedCredentials | null {
           throw new Error(
             `Credentials file at ${p} has insecure permissions (mode ${modeBits.toString(8).padStart(4, '0')}). ` +
             `Expected 0600. Failed to repair: ${(chmodErr as Error).message}. ` +
-            `Either chmod 600 the file yourself or run 'opencode-devin-auth logout && opencode auth login' to recreate it.`,
+            `Either chmod 600 the file yourself or run 'opencode-devin-bridge logout && opencode auth login' to recreate it.`,
           );
         }
       }
@@ -198,19 +150,31 @@ export function loadCredentials(): PersistedCredentials | null {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error(`Credentials file at ${p} is not valid JSON. Run 'opencode-devin-auth login' to re-authenticate, or delete the file.`);
+    throw new Error(`Credentials file at ${p} is not valid JSON. Run 'opencode-devin-bridge login' to re-authenticate, or delete the file.`);
   }
   if (!isPersistedCredentials(parsed)) {
-    throw new Error(`Credentials file at ${p} is missing required fields. Run 'opencode-devin-auth login' to re-authenticate.`);
+    throw new Error(`Credentials file at ${p} is missing required fields. Run 'opencode-devin-bridge login' to re-authenticate.`);
   }
   return parsed;
 }
 
 export function deleteCredentials(): boolean {
   const p = getCredentialsPath();
-  if (!fs.existsSync(p)) return false;
-  fs.unlinkSync(p);
-  return true;
+  const legacyPath = getLegacyCredentialsPath();
+  if (!fs.existsSync(p) && !fs.existsSync(legacyPath)) return false;
+  ensureDir();
+  return withFileLockSync(path.join(getCredentialsDir(), LOCK_FILENAME), () => {
+    let removed = false;
+    for (const credentialsPath of [p, legacyPath]) {
+      try {
+        fs.unlinkSync(credentialsPath);
+        removed = true;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      }
+    }
+    return removed;
+  });
 }
 
 function isPersistedCredentials(value: unknown): value is PersistedCredentials {

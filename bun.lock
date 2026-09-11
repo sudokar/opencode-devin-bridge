@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "opencode-devin-auth",
+      "name": "opencode-devin-bridge",
       "dependencies": {
         "xdg-basedir": "^5.1.0",
       },
