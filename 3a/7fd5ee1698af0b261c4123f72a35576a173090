@@ -1,0 +1,24 @@
+README.md
+  s_73313555a19d3e::t_a9605b16ef6854 43,51
+  s_73313555a19d3e::t_e7149360396079 26
+  s_73313555a19d3e::t_ba2a97d0ad8dfe 157
+  s_73313555a19d3e::t_75ab163381da4f 167,179-189,192-194,197
+  s_73313555a19d3e::t_59f8e3a2ec83d5 44
+  s_73313555a19d3e::t_c795a07f33468c 169,171,173-178,190-191,195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "3a7fd5ee1698af0b261c4123f72a35576a173090",
+  "prompts": {},
+  "sessions": {
+    "s_73313555a19d3e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f6e457ce3ffeVl7U4WYFDeysst",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "sudokar <sudokar@yahoo.com>"
+    }
+  }
+}
