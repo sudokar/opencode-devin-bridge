@@ -10,7 +10,7 @@ Use the models available to your Devin account directly in [OpenCode](https://op
 
 | OpenCode | Bridge version | Install |
 | --- | --- | --- |
-| 2.2.6 or newer (V2) | 2.x | `opencode-devin-bridge@beta` (or `@2`) |
+| 2.2.5 or newer (V2) | 2.x | `opencode-devin-bridge@beta` (or `@2`) |
 | 1.x (V1) | 1.x only | `opencode-devin-bridge@1.0.0-beta` |
 
 Bridge 2.x is built for OpenCode V2 and does **not** load in OpenCode V1. If you use OpenCode V1, stay on OpenCode V1 and pin the bridge to a 1.x release. Do not use the `@beta` tag or `install.sh`, which target V2. Without a pin, the 2.x release can replace the V1 plugin when OpenCode resolves the tag.
@@ -61,7 +61,7 @@ Then sign in with `opencode auth login --provider devin` and refresh the catalog
 
 ## Requirements
 
-- [OpenCode 2.2.6 or newer](https://opencode.ai/docs/cli). Bridge 2.x does not support OpenCode V1; see [Version Compatibility](#version-compatibility) for the V1 setup.
+- [OpenCode 2.2.5 or newer](https://opencode.ai/docs/cli). Bridge 2.x does not support OpenCode V1; see [Version Compatibility](#version-compatibility) for the V1 setup.
 - The [Devin CLI](https://docs.devin.ai/cli), installed and authenticated independently of this bridge
 - A Devin account for which this succeeds:
 
@@ -202,7 +202,7 @@ OAuth credentials are persisted at `$XDG_CONFIG_HOME/opencode-devin-bridge/crede
 
 ## Upgrading from OpenCode V1
 
-To stay on OpenCode V1, do not upgrade the bridge; keep the 1.x pin from [Version Compatibility](#version-compatibility). To move to OpenCode V2, install OpenCode 2.2.6 or newer and update the bridge to the V2 release. The installer moves its own old `plugin` entry to `plugins` in `opencode.json` without changing unrelated entries. If you configure it manually, ensure the bridge appears only once across `plugin` and `plugins`, then reload OpenCode. Existing V1 provider settings are accepted by OpenCode V2, and the bridge keeps existing credentials and the catalog.
+To stay on OpenCode V1, do not upgrade the bridge; keep the 1.x pin from [Version Compatibility](#version-compatibility). To move to OpenCode V2, install OpenCode 2.2.5 or newer and update the bridge to the V2 release. The installer moves its own old `plugin` entry to `plugins` in `opencode.json` without changing unrelated entries. If you configure it manually, ensure the bridge appears only once across `plugin` and `plugins`, then reload OpenCode. Existing V1 provider settings are accepted by OpenCode V2, and the bridge keeps existing credentials and the catalog.
 
 OpenCode V1 authentication is not automatically converted to a V2 integration. Existing bridge credentials remain in use and take priority over a V2 connection. To switch to V2 sign-in, remove the old bridge credentials with `npx opencode-devin-bridge@beta logout`, then sign in through OpenCode.
 

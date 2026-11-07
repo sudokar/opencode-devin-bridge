@@ -46,7 +46,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@opencode/plugin": "^2.2.6",
+    "@opencode/plugin": "^2.2.5",
     "xdg-basedir": "^5.1.0"
   },
   "devDependencies": {

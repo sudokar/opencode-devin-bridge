@@ -8,10 +8,10 @@ import { encodeMessage, encodeString, encodeVarintField, frameConnectStream, ite
 const binary = Bun.which('opencode');
 const version = binary ? new TextDecoder().decode(Bun.spawnSync([binary, '--version']).stdout) : '';
 const parts = version.match(/(\d+)\.(\d+)\.(\d+)/)?.slice(1).map(Number);
-const supportsV2 = !!parts && parts[0] === 2 && (parts[1]! > 2 || (parts[1] === 2 && parts[2]! >= 6));
+const supportsV2 = !!parts && parts[0] === 2 && (parts[1]! > 2 || (parts[1] === 2 && parts[2]! >= 5));
 const pluginPackage = process.env.DEVIN_BRIDGE_TEST_PACKAGE ?? process.cwd();
 if (process.env.DEVIN_BRIDGE_TEST_PACKAGE && !supportsV2) {
-  throw new Error('OpenCode 2.2.6 or newer is required for packaged tests');
+  throw new Error('OpenCode 2.2.5 or newer is required for packaged tests');
 }
 
 beforeAll(() => {

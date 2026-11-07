@@ -186,11 +186,11 @@ OC_VERSION="$(printf '%s' "$OC_VERSION_RAW" | LC_ALL=C sed $'s/\033\\[[0-9;?]*[a
 [[ -z "$OC_VERSION" ]] && OC_VERSION="unknown"
 ok "opencode $OC_VERSION"
 if [[ ! "$OC_VERSION" =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-  die "Cannot determine the OpenCode version. This release requires OpenCode 2.2.6 or newer."
+  die "Cannot determine the OpenCode version. This release requires OpenCode 2.2.5 or newer."
 fi
 OC_MAJOR=${BASH_REMATCH[1]}; OC_MINOR=${BASH_REMATCH[2]}; OC_PATCH=${BASH_REMATCH[3]}
-if (( 10#$OC_MAJOR < 2 || (10#$OC_MAJOR == 2 && 10#$OC_MINOR < 2) || (10#$OC_MAJOR == 2 && 10#$OC_MINOR == 2 && 10#$OC_PATCH < 6) )); then
-  die "OpenCode 2.2.6 or newer is required. Install an older bridge release for OpenCode V1."
+if (( 10#$OC_MAJOR < 2 || (10#$OC_MAJOR == 2 && 10#$OC_MINOR < 2) || (10#$OC_MAJOR == 2 && 10#$OC_MINOR == 2 && 10#$OC_PATCH < 5) )); then
+  die "OpenCode 2.2.5 or newer is required. Install an older bridge release for OpenCode V1."
 fi
 
 # ── 2. Devin CLI preflight ────────────────────────────────────────────

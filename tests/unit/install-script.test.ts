@@ -14,7 +14,7 @@ function runInstaller(devinScript?: string, config?: object, args: string[] = []
   if (useBun) fs.symlinkSync(process.execPath, path.join(bin, 'bun'));
   fs.writeFileSync(path.join(bin, 'opencode'), `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> "$OPENCODE_LOG"
-if [[ "$1" == "--version" ]]; then printf 'opencode v2.2.6\\n'; fi
+if [[ "$1" == "--version" ]]; then printf 'opencode v2.2.5\\n'; fi
 `);
   fs.writeFileSync(path.join(bin, 'bunx'), '#!/usr/bin/env bash\nexit 0\n');
   fs.chmodSync(path.join(bin, 'bunx'), 0o755);
