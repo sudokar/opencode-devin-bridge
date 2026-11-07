@@ -1,13 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
+  "plugins": [
     "opencode-devin-bridge@beta"
   ],
-  "provider": {
+  "providers": {
     "devin": {
       "name": "Devin",
-      "npm": "@ai-sdk/openai-compatible",
-      "options": {
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
         "baseURL": "http://127.0.0.1:42124/v1"
       }
     }

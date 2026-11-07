@@ -1,18 +1,4 @@
-/**
- * Windsurf Plugin for OpenCode
- * 
- * Enables using Windsurf/Codeium models through OpenCode by intercepting
- * requests and routing them through the local Windsurf language server.
- * 
- * Architecture:
- * 1. Plugin registers a custom fetch handler for windsurf.local domain
- * 2. Requests are transformed to gRPC format and sent to local language server
- * 3. Responses are streamed back in OpenAI-compatible SSE format
- * 
- * Requirements:
- * - Windsurf must be running (launches language_server_macos process)
- * - User must be logged into Windsurf (provides API key in ~/.codeium/config.json)
- */
+/** Local OpenAI-compatible proxy for Devin's cloud-direct chat service. */
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
@@ -29,9 +15,6 @@ import { fileURLToPath } from 'url';
  * this `import.meta.url`-based fallback.
  */
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
-import type { PluginInput, Hooks } from '@opencode-ai/plugin';
-import type { Auth } from '@opencode-ai/sdk';
-import type { Model as ModelV2 } from '@opencode-ai/sdk/v2';
 
 // File-based debug logger because opencode-darwin-arm64 swallows our
 // console.error in some invocations (TUI takes over stderr). Set
@@ -69,7 +52,6 @@ const debugLog = (() => {
 })();
 import { WindsurfCredentials, WindsurfError } from './plugin/auth.js';
 import { resolveCredentials } from './plugin/credentials-resolver.js';
-import { loadCredentials as loadOAuthCredentials } from './oauth/storage.js';
 import type { ChatHistoryItem } from './cloud-direct/index.js';
 import {
   getDefaultModel,
@@ -78,11 +60,8 @@ import {
   resolveModel,
 } from './plugin/models.js';
 import { loadCatalog, isStale } from './models/store.js';
-import { catalogToModelV2Map } from './models/to-model-v2.js';
-import { catalogToProviderConfigModels } from './models/to-provider-config.js';
 import { refreshCatalog } from './models/refresh.js';
 import type { RefreshOutcome } from './models/types.js';
-import { PLUGIN_ID } from './constants.js';
 
 // ============================================================================
 // Types
@@ -588,15 +567,10 @@ async function createNonStreamingResponse(
 //
 // Security model:
 //
-//   1. We bind a FIXED loopback port (42124) and document it in the user's
-//      opencode config. opencode constructs its @ai-sdk/openai-compatible
-//      SDK with that static `baseURL` — chat.params can't change baseURL
-//      after construction (it goes into `requestBodyValues`, not the actual
-//      URL), so we have to live at a predictable port.
+//   1. We bind a fixed loopback port (42124 by default). The V2 model request
+//      hook routes Devin requests to this owned endpoint.
 //   2. At plugin load we generate a 256-bit per-process shared secret
-//      (PROXY_SECRET). The `chat.params` hook sets it as `options.apiKey`;
-//      opencode's @ai-sdk/openai-compatible adapter wires it through to
-//      `Authorization: Bearer <secret>` on every call.
+//      (PROXY_SECRET). The V2 request hook sets it as the Bearer token.
 //   3. The proxy rejects any /v1/* request whose Authorization header
 //      doesn't match the in-process secret. Hostile local processes and
 //      DNS-rebinding browser tabs lose access because they don't know it.
@@ -622,11 +596,7 @@ async function createNonStreamingResponse(
 //      to kill (a second opencode-devin-bridge version, an unrelated service,
 //      etc). Whatever port we bind still gets the exact same treatment: it
 //      must still be a real bind (no adoption/fallback across processes),
-//      and it's still the value opencode's config carries forward. If you
-//      hand-declare `provider.devin.options.baseURL` yourself instead of
-//      relying on the plugin's auto-generated stub, remember to update that
-//      URL's port too — chat.params can't change baseURL after construction
-//      (see point 1).
+//      and V2 requests are routed to that same port.
 
 const DEVIN_BRIDGE_HOST = '127.0.0.1';
 export const DEFAULT_DEVIN_BRIDGE_PORT = 42124;
@@ -673,10 +643,14 @@ const PROXY_SECRET: string = crypto.randomBytes(32).toString('hex');
 interface ProxyRegistrySlot {
   baseURL: string;
   startup?: Promise<string>;
+  secret?: string;
+  stop?: () => Promise<void>;
+  users?: number;
+  closing?: Promise<void>;
 }
 interface WindsurfPluginGlobals {
   /** Bun runtime detection — undefined under vanilla Node. */
-  Bun?: { serve(opts: unknown): { port: number } };
+  Bun?: { serve(opts: unknown): { port: number; stop(closeActiveConnections?: boolean): void } };
 }
 const globals = globalThis as unknown as WindsurfPluginGlobals;
 const slotRegistry = globalThis as unknown as Record<string, ProxyRegistrySlot | undefined>;
@@ -718,22 +692,8 @@ function getGlobalKey(): string {
  *     rebinding browser tabs; opencode's server-side fetch omits Origin
  *     entirely, so legitimate requests pass.
  *
- *   - Bearer gate (HARD). The Authorization header MUST match the
- *     Windsurf api_key from the user's persisted credentials. opencode
- *     pulls the stored api_key (returned from our authorize() callback
- *     as `{type:'success', key}`) and wires it through to
- *     `Authorization: Bearer <api_key>` automatically on every request.
- *     A local attacker without read access to `credentials.json` (mode
- *     0600) can't observe the key, so they can't forge this header.
- *
- *     We also accept the in-process PROXY_SECRET so callers that go
- *     through `chat.params` (e.g. unit tests, programmatic callers)
- *     still work.
- *
- *     If NO Authorization is supplied at all, we reject — opencode always
- *     supplies one when auth is set up. The "no auth, accept anyway"
- *     fallback was removed because it left the proxy completely open to
- *     any local process.
+ *   - Bearer gate (HARD). Requests must carry either the in-process
+ *     PROXY_SECRET or the api_key in the user's persisted credentials.
  *
  * Net trust model: a local attacker needs to either read 0600-protected
  * `credentials.json` (same risk envelope as Codeium's own
@@ -749,7 +709,7 @@ function getGlobalKey(): string {
  * 2s caches that could diverge across an external credential rotation,
  * letting a request authenticated against key-A get forwarded with key-B.
  */
-async function authorizeProxyRequest(req: Request): Promise<Response | null> {
+async function authorizeProxyRequest(req: Request): Promise<Response | { credentials: WindsurfCredentials | null }> {
   // 1. Origin gate (HARD) — block browser tabs claiming a foreign origin.
   const origin = req.headers.get('origin');
   if (origin) {
@@ -788,7 +748,7 @@ async function authorizeProxyRequest(req: Request): Promise<Response | null> {
     presentedBuf.length === secretBuf.length &&
     crypto.timingSafeEqual(presentedBuf, secretBuf)
   ) {
-    return null;
+    return { credentials: null };
   }
 
   // Otherwise, validate against the persisted credentials' apiKey. We
@@ -804,7 +764,7 @@ async function authorizeProxyRequest(req: Request): Promise<Response | null> {
         presentedBuf.length === credBuf.length &&
         crypto.timingSafeEqual(presentedBuf, credBuf)
       ) {
-        return null;
+        return { credentials: creds };
       }
     }
   } catch { /* not authenticated / missing creds → fall through to 401 */ }
@@ -831,6 +791,10 @@ async function ensureWindsurfProxyServer(): Promise<string> {
 
   // Return existing server URL if already started.
   const slot = slotRegistry[key];
+  if (slot?.closing) {
+    await slot.closing;
+    return ensureWindsurfProxyServer();
+  }
   if (slot && typeof slot.baseURL === 'string' && slot.baseURL.length > 0) {
     return slot.baseURL;
   }
@@ -858,8 +822,8 @@ async function ensureWindsurfProxyServer(): Promise<string> {
 
       // Every other endpoint requires the per-process Bearer secret +
       // loopback origin.
-      const blocked = await authorizeProxyRequest(req);
-      if (blocked) return blocked;
+      const auth = await authorizeProxyRequest(req);
+      if (auth instanceof Response) return auth;
 
       // Models endpoint
       if (url.pathname === '/v1/models' || url.pathname === '/models') {
@@ -923,7 +887,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
           // resolveCredentials prefers OAuth (no Windsurf required) and falls
           // back to scraping the running Windsurf process. It throws a
           // descriptive WindsurfError if neither is available.
-          const credentials = await resolveCredentials();
+          const credentials = auth.credentials ?? await resolveCredentials();
           if (debugLog.enabled) {
             debugLog.log(`[devin-bridge] mode=${credentials.cloudDirect ? 'cloud-direct' : 'local-ls'} api=${credentials.apiServerUrl ?? '(default)'}`);
           }
@@ -1035,6 +999,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
   const bunServe = globals.Bun?.serve.bind(globals.Bun);
   const hasBunServe = typeof bunServe === 'function';
 
+  let stopServer: (() => Promise<void>) | undefined;
   const startup = (async (): Promise<string> => {
     if (debugLog.enabled) {
       debugLog.log(`[devin-bridge] ensureBridgeServer (hasBunServe=${hasBunServe})`);
@@ -1057,7 +1022,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
         maxRequestBodySize: 32 * 1024 * 1024,
       });
 
-    const startNodeServer = (port: number): Promise<{ port: number }> =>
+    const startNodeServer = (port: number): Promise<{ port: number; stop: () => Promise<void> }> =>
       new Promise((resolve, reject) => {
         // Node's http needs a slightly different handler — adapt our Request→Response
         // handler. We collect headers + body then re-wrap as a WHATWG Request.
@@ -1156,18 +1121,18 @@ async function ensureWindsurfProxyServer(): Promise<string> {
           srv.listen(port, DEVIN_BRIDGE_HOST, () => {
             const addr = srv.address();
             if (!addr || typeof addr === 'string') reject(new Error('bad node http address'));
-            else resolve({ port: addr.port });
+            else resolve({ port: addr.port, stop: () => new Promise<void>((done, fail) => srv.close((err) => err ? fail(err) : done())) });
           });
         }).catch(reject);
       });
 
-    const startServer = async (port: number): Promise<{ port: number }> => {
+    const startServer = async (port: number): Promise<{ port: number; stop: () => Promise<void> }> => {
       if (hasBunServe) {
         debugLog.log(`[devin-bridge] calling Bun.serve port=${port}`);
         try {
           const s = startBunServer(port);
           debugLog.log(`[devin-bridge] Bun.serve returned, port=${s.port}`);
-          return { port: s.port };
+          return { port: s.port, stop: async () => { s.stop(false); } };
         } catch (e) {
           debugLog.log(`[devin-bridge] Bun.serve threw: ${(e as Error).message}`);
           throw e;
@@ -1187,6 +1152,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
     // the port — surface a clear error so the user can investigate.
     try {
       const server = await startServer(DEVIN_BRIDGE_PORT);
+      stopServer = server.stop;
       if (debugLog.enabled) {
         debugLog.log(`[devin-bridge] listening on http://${DEVIN_BRIDGE_HOST}:${server.port}/v1 (secret-gated)`);
       }
@@ -1200,7 +1166,7 @@ async function ensureWindsurfProxyServer(): Promise<string> {
         throw new Error(
           `opencode-devin-bridge: port ${DEVIN_BRIDGE_PORT} is already in use by another process. ` +
           `Identify the squatter with \`lsof -nP -iTCP:${DEVIN_BRIDGE_PORT} -sTCP:LISTEN\` and kill it, then re-run opencode. ` +
-          `Alternatively, set DEVIN_BRIDGE_PORT to a free port (and update provider.devin.options.baseURL to match, if you declared it yourself) and re-run. ` +
+          `Alternatively, set DEVIN_BRIDGE_PORT to a free port and re-run. ` +
           `(This port is the documented baseURL for the Devin provider; we refuse to silently adopt a foreign listener since it would be able to capture your prompts.)`,
         );
       }
@@ -1208,10 +1174,10 @@ async function ensureWindsurfProxyServer(): Promise<string> {
     }
   })();
 
-  slotRegistry[key] = { baseURL: '', startup };
+  slotRegistry[key] = { baseURL: '', startup, secret: PROXY_SECRET, users: 0 };
   try {
     const baseURL = await startup;
-    slotRegistry[key] = { baseURL };
+    Object.assign(slotRegistry[key]!, { baseURL, stop: stopServer, startup: undefined });
     return baseURL;
   } catch (err) {
     delete slotRegistry[key];
@@ -1219,33 +1185,31 @@ async function ensureWindsurfProxyServer(): Promise<string> {
   }
 }
 
-/**
- * Injects the proxy baseURL + per-process Bearer secret into `chat.params`
- * output. Pulled out of the `chat.params` hook body so it is directly
- * testable without spinning up the plugin's real proxy server.
- */
-export function applyDevinChatParams(
-  input: { model?: { providerID?: string } },
-  output: { options?: Record<string, unknown> },
-  providerId: string,
-  baseURL: string,
-  secret: string,
-): void {
-  if (input.model?.providerID !== providerId) return;
-  output.options = output.options || {};
-  output.options.baseURL = baseURL;
-  output.options.apiKey = secret;
-}
-
-/**
- * `provider.models` hook body, pulled out of the factory so it is directly
- * testable against a persisted catalog without an opencode plugin host.
- * Returns an empty map when nothing has been persisted yet.
- */
-export async function buildDevinModels(providerId: string): Promise<Record<string, ModelV2>> {
-  const catalog = loadCatalog();
-  if (!catalog) return {};
-  return catalogToModelV2Map(catalog, providerId);
+/** Share one owned listener among plugin instances, and close it after the last unload. */
+export async function acquireDevinProxy(): Promise<{ baseURL: string; secret: string; release: () => Promise<void> }> {
+  const key = getGlobalKey();
+  let baseURL: string;
+  let slot: ProxyRegistrySlot | undefined;
+  do {
+    baseURL = await ensureWindsurfProxyServer();
+    slot = slotRegistry[key];
+  } while (!slot || slot.closing);
+  slot.users = (slot.users ?? 0) + 1;
+  let released = false;
+  return {
+    baseURL,
+    secret: slot.secret!,
+    async release() {
+      if (released) return;
+      released = true;
+      slot.users!--;
+      if (slot.users !== 0) return;
+      slot.closing = (async () => {
+        try { await slot.stop?.(); } finally { if (slotRegistry[key] === slot) delete slotRegistry[key]; }
+      })();
+      await slot.closing;
+    },
+  };
 }
 
 /**
@@ -1271,367 +1235,3 @@ export function triggerStaleRefreshIfNeeded(
   );
   return pending;
 }
-
-/**
- * `config` hook body: ensures a `devin` provider entry exists in opencode's
- * in-memory config when the user hasn't declared one, and (re)populates its
- * `models` map from the current persisted catalog when the entry doesn't
- * already carry a customized one.
- *
- * The `models` injection is NOT gated behind "stub was just created" —
- * `provider.<id>.models` is what the installed opencode runtime actually
- * reads to resolve models (its `provider.models()` plugin hook is defined in
- * the SDK's types but is not invoked in practice; see
- * `to-provider-config.ts`'s header comment). Without this, an existing
- * `provider.devin` block written by an earlier `install.sh` run (correctly
- * carrying no static model list, per this change's original design) would
- * leave devin/* models unresolvable forever, since the early-return below
- * used to skip the whole function once the entry existed.
- *
- * Never writes to the user's opencode.json — `config` here is the in-memory
- * `Config` object opencode passes to the hook, not a file.
- */
-export function ensureDevinProviderStub(
-  config: { provider?: Record<string, unknown> },
-  providerId: string,
-  baseURL: string,
-): void {
-  if (!config.provider || typeof config.provider !== 'object') config.provider = {};
-  const existing = config.provider[providerId];
-  if (!existing || typeof existing !== 'object') {
-    config.provider[providerId] = {
-      name: 'Devin',
-      npm: '@ai-sdk/openai-compatible',
-      options: { baseURL },
-    };
-  }
-
-  const entry = config.provider[providerId] as { models?: unknown };
-  const hasCustomModels =
-    entry.models !== undefined &&
-    entry.models !== null &&
-    typeof entry.models === 'object' &&
-    Object.keys(entry.models as Record<string, unknown>).length > 0;
-  if (!hasCustomModels) {
-    const catalog = loadCatalog();
-    if (catalog) {
-      (entry as { models?: unknown }).models = catalogToProviderConfigModels(catalog);
-    }
-  }
-}
-
-/**
- * Emits a one-time console notice when the user's configuration still has a
- * `provider.windsurf` block — the identifier that provider was renamed from.
- * Never modifies the block; the user must edit their own opencode.json.
- */
-let windsurfRenameWarningEmitted = false;
-
-export function warnIfWindsurfProviderPresent(config: { provider?: Record<string, unknown> }): void {
-  if (windsurfRenameWarningEmitted) return;
-  if (!config.provider || !('windsurf' in config.provider)) return;
-  windsurfRenameWarningEmitted = true;
-  console.error(
-    '[opencode-devin-bridge] The legacy "windsurf" provider was renamed to "devin". ' +
-    'Your opencode configuration still has a provider.windsurf block — please update your configuration ' +
-    '(the devin provider is now supplied automatically; you can remove provider.windsurf).',
-  );
-}
-
-/** Test-only seam: resets the one-time warning between test cases. */
-export function __resetWindsurfRenameWarningForTests(): void {
-  windsurfRenameWarningEmitted = false;
-}
-
-// ============================================================================
-// Plugin Factory
-// ============================================================================
-
-// ChatParamsHook mirrors the opencode-plugin Hooks['chat.params'] signature
-// (input + output shapes). We pull them off the public Hooks type so a future
-// SDK bump automatically retypes us instead of silently drifting.
-type ChatParamsHook = NonNullable<Hooks['chat.params']>;
-type ChatParamsInput = Parameters<ChatParamsHook>[0];
-type ChatParamsOutput = Parameters<ChatParamsHook>[1];
-
-/**
- * Create the Windsurf plugin (follows cursor-auth pattern)
- */
-export const createWindsurfPlugin =
-  (providerId: string = PLUGIN_ID) =>
-  async (context: PluginInput): Promise<Hooks> => {
-    // PluginInput.client is the opencode-sdk OpencodeClient. We use it for
-    // writing to opencode's auth.json store (mirror of antigravity's pattern).
-    const { client } = context ?? ({} as PluginInput);
-    // Start proxy server on plugin load
-    const proxyBaseURL = await ensureWindsurfProxyServer();
-
-    // Fire-and-forget: refreshes the catalog in the background when it's
-    // stale, without delaying plugin load or blocking requests served from
-    // whatever catalog is currently persisted.
-    triggerStaleRefreshIfNeeded();
-
-    return {
-      // Ensures a `devin` provider stub exists in opencode's in-memory
-      // config when the user hasn't declared one, and warns (once) if a
-      // lingering `provider.windsurf` block names the pre-rename identifier.
-      // Neither ever touches the user's opencode.json file.
-      async config(input) {
-        warnIfWindsurfProviderPresent(input);
-        ensureDevinProviderStub(input, providerId, proxyBaseURL);
-      },
-
-      // Advertises the persisted catalog's models to opencode's picker
-      // under the `devin` provider id. Delegates to `buildDevinModels` so
-      // the mapping is testable without an opencode plugin host.
-      provider: {
-        id: providerId,
-        async models() {
-          return buildDevinModels(providerId);
-        },
-      },
-
-      auth: {
-        provider: providerId,
-
-        /**
-         * loader runs once at plugin load + whenever opencode wants to refresh
-         * provider info. Two-way mirror with credentials.json:
-         *
-         *   - opencode auth has a key → mirror to credentials.json (if file is
-         *     missing or stale)
-         *   - opencode auth was CLEARED via `opencode auth logout windsurf` →
-         *     clear credentials.json so we don't keep using a stale token
-         *
-         * The CLI flow (`npx opencode-devin-bridge login`) doesn't touch
-         * opencode's auth store, so we DON'T delete credentials.json just
-         * because opencode's store happens to be empty — we check via the
-         * `lastSyncedViaOpencode` marker.
-         */
-        async loader(getAuth: () => Promise<Auth>) {
-          try {
-            // Defensive: opencode can transiently return `undefined` from
-            // getAuth() during its own auth-store refresh window. If we
-            // believed that and immediately deleted credentials.json
-            // (because the saved file has syncedViaOpencodeAuth=true), the
-            // user would be silently logged out mid-session and the next
-            // chat would 401 / quotaless-prompt.
-            //
-            // Mitigation: when getAuth() returns no key, try again after a
-            // short delay before concluding the user actually logged out.
-            // A real logout is monotonic (auth stays empty); a transient
-            // returns a key on the retry.
-            const readKey = async (): Promise<string | undefined> => {
-              const auth = await getAuth();
-              if (!auth || typeof auth !== 'object') return undefined;
-              if (auth.type === 'oauth') return auth.access;
-              return auth.key;
-            };
-            let opencodeKey = await readKey();
-            if (!opencodeKey) {
-              // Second look after 50ms — same order of magnitude as
-              // opencode's internal refresh window.
-              await new Promise((r) => setTimeout(r, 50));
-              opencodeKey = await readKey();
-            }
-            const existing = (() => { try { return loadOAuthCredentials(); } catch { return null; } })();
-
-            if (opencodeKey) {
-              // opencode has a key. Sync into credentials.json if file is
-              // missing or stale. Preserve `syncedViaOpencodeAuth` from the
-              // existing file if explicitly set to `false` (CLI-managed
-              // creds want to survive opencode logout). Default to `true`
-              // when the file is new or had no flag.
-              if (!existing || existing.apiKey !== opencodeKey) {
-                const { saveCredentials } = await import('./oauth/storage.js');
-                const { DEFAULT_REGION } = await import('./oauth/types.js');
-                await saveCredentials({
-                  apiKey: opencodeKey,
-                  name: existing?.name ?? 'opencode-auth-stored',
-                  apiServerUrl: existing?.apiServerUrl ?? 'https://server.codeium.com',
-                  issuedAt: new Date().toISOString(),
-                  oauthClientId: DEFAULT_REGION.oauthClientId,
-                  syncedViaOpencodeAuth: existing?.syncedViaOpencodeAuth ?? true,
-                });
-              }
-            } else if (existing?.syncedViaOpencodeAuth) {
-              // opencode-managed key was confirmed-cleared on BOTH reads
-              // (initial + 50ms retry). Mirror to credentials.json so the
-              // chat path stops accepting the stale token.
-              const { deleteCredentials } = await import('./oauth/storage.js');
-              deleteCredentials();
-              // Drop every layer of in-memory credential state so a
-              // logout immediately stops authorizing requests:
-              //  - JWT cache (would otherwise keep working for ~24min)
-              //  - sessionId cache (server-side context tied to the key)
-              //  - resolveCredentials memo (shared by auth gate + chat handler)
-              try {
-                const { clearCachedUserJwt } = await import('./cloud-direct/auth.js');
-                clearCachedUserJwt();
-                const { clearSessionIds } = await import('./cloud-direct/chat.js');
-                clearSessionIds();
-                const { clearCachedCatalog } = await import('./cloud-direct/catalog.js');
-                clearCachedCatalog();
-                const { clearResolveCache } = await import('./plugin/credentials-resolver.js');
-                clearResolveCache();
-              } catch { /* best-effort */ }
-            }
-            // (otherwise leave credentials.json alone — likely written by our
-            // standalone CLI without opencode involvement.)
-          } catch (loaderErr) {
-            // The loader contract requires us not to throw — an exception
-            // here would crash opencode's plugin host. But silently
-            // swallowing storage failures used to mean a failed
-            // `saveCredentials` or `deleteCredentials` left opencode
-            // reporting "logged in" / "logged out" while credentials.json
-            // disagreed (and the proxy auth gate then trusted the stale
-            // state). Surface to debugLog so users running with
-            // DEVIN_BRIDGE_DEBUG=1 see the cause, AND emit a single
-            // console.warn so the bare CLI also gets a visible hint.
-            try {
-              debugLog.log('[devin-bridge] loader credential-sync failed:', loaderErr instanceof Error ? loaderErr.message : loaderErr);
-              process.stderr.write(`[opencode-devin-bridge] credential sync failed: ${loaderErr instanceof Error ? loaderErr.message : String(loaderErr)}\n`);
-            } catch { /* */ }
-          }
-          return {};
-        },
-
-        /**
-         * `opencode auth login` enumerates these and shows them as choices
-         * after the user picks the provider. The label is what opencode
-         * renders next to the bullet point.
-         */
-        methods: [
-          {
-            type: 'oauth' as const,
-            label: 'Sign in with Devin',
-            // Explicit empty prompts array. Per @opencode-ai/plugin's
-            // AuthHook type, `prompts` is optional — but opencode CLI
-            // v1.15.6 (and possibly later) dereferences `method.prompts`
-            // without a null-check in its login picker, crashing with
-            // `undefined is not an object (evaluating 'C.prompts')`
-            // when the field is absent. Providing an empty array is the
-            // smallest workaround and is type-clean.
-            //
-            // GitHub issue: sudokar/opencode-devin-auth#13
-            prompts: [],
-            async authorize() {
-              // Two-stage: prepareLogin BINDS the loopback NOW and returns
-              // the URL with the real port. Without this, our previous
-              // implementation built the URL with port=0 (placeholder)
-              // before binding, and opencode opened that broken URL —
-              // user reported "Failed to authorize".
-              const { prepareLogin } = await import('./oauth/login.js');
-              const { saveCredentials } = await import('./oauth/storage.js');
-              const { DEFAULT_REGION } = await import('./oauth/types.js');
-
-              let prepared: Awaited<ReturnType<typeof prepareLogin>>;
-              try {
-                prepared = await prepareLogin({ region: DEFAULT_REGION });
-              } catch (err) {
-                debugLog.log('[devin-bridge] prepareLogin failed:', err instanceof Error ? err.message : err);
-                // We have to return SOMETHING shaped like AuthOuathResult, so
-                // surface the error via the callback.
-                return {
-                  url: 'https://windsurf.com/',
-                  instructions: 'Failed to start loopback listener. Re-run `opencode auth login`.',
-                  method: 'auto' as const,
-                  callback: async () => ({ type: 'failed' as const }),
-                };
-              }
-
-              return {
-                url: prepared.url,
-                instructions:
-                  'A browser tab is opening. Sign in with your Devin account; ' +
-                  'this CLI is listening on a local port and will capture the token automatically.',
-                method: 'auto' as const,
-                async callback() {
-                  // opencode swallows our thrown errors and prints a generic
-                  // "Failed to authorize". Mirror the *cause* to a known
-                  // tmpfile so the user can `cat` it after a failure without
-                  // setting any env vars.
-                  const errLogPath = path.join(os.tmpdir(), 'opencode-devin-bridge-last-error.log');
-                  const writeErr = (stage: string, err: unknown) => {
-                    const detail =
-                      err instanceof Error
-                        ? `${err.name}: ${err.message}\n${err.stack ?? ''}`
-                        : String(err);
-                    try {
-                      // 0600 + O_NOFOLLOW so a pre-planted symlink can't
-                      // redirect the log elsewhere and the file isn't
-                      // world-readable on shared hosts. Use openSync so
-                      // we control the mode; writeFileSync's default
-                      // mode is 0666 & ~umask (typically 0644).
-                      try { fs.unlinkSync(errLogPath); } catch { /* not there, fine */ }
-                      const noFollow = (fs.constants as { O_NOFOLLOW?: number }).O_NOFOLLOW ?? 0;
-                      const fd = fs.openSync(
-                        errLogPath,
-                        fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | noFollow,
-                        0o600,
-                      );
-                      try {
-                        fs.writeSync(fd, `[${new Date().toISOString()}] stage=${stage}\n${detail}\n`);
-                      } finally {
-                        fs.closeSync(fd);
-                      }
-                    } catch { /* ok */ }
-                  };
-
-                  try {
-                    let result;
-                    try {
-                      result = await prepared.awaitToken();
-                    } catch (err) {
-                      writeErr('awaitToken', err);
-                      throw err;
-                    }
-                    try {
-                      await saveCredentials({
-                        apiKey: result.apiKey,
-                        name: result.name,
-                        apiServerUrl: result.apiServerUrl,
-                        redirectUrl: result.redirectUrl,
-                        issuedAt: new Date().toISOString(),
-                        oauthClientId: DEFAULT_REGION.oauthClientId,
-                        syncedViaOpencodeAuth: true,
-                      });
-                    } catch (err) {
-                      writeErr('saveCredentials', err);
-                      throw err;
-                    }
-                    try { fs.unlinkSync(errLogPath); } catch { /* ok */ }
-                    return {
-                      type: 'success' as const,
-                      key: result.apiKey,
-                    };
-                  } catch (err) {
-                    debugLog.log('[devin-bridge] OAuth flow failed:', err instanceof Error ? err.message : err);
-                    return { type: 'failed' as const };
-                  }
-                },
-              };
-            },
-          },
-        ],
-      },
-
-      // Dynamic baseURL injection (key pattern from cursor-auth). Delegates
-      // to `applyDevinChatParams` so the routing/injection logic is testable
-      // without spinning up the real proxy server.
-      async 'chat.params'(input: ChatParamsInput, output: ChatParamsOutput) {
-        applyDevinChatParams(input, output, providerId, proxyBaseURL, PROXY_SECRET);
-      },
-    };
-    // `client` is available for future direct auth.set/get operations.
-    void client;
-  };
-
-/**
- * Default plugin export. opencode discovers this via the default export and
- * registers a single provider with id `devin` (previously `windsurf` — see
- * `PLUGIN_ID` in constants.ts). (We previously also exported a CodeiumPlugin
- * alias that registered a second provider id `codeium`; that surfaced as a
- * duplicate entry in `opencode auth login`'s picker and has been removed.)
- */
-export const WindsurfPlugin = createWindsurfPlugin();

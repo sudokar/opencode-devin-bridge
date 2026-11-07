@@ -73,19 +73,6 @@ export async function login(opts: LoginOptions = {}): Promise<OAuthLoginResult> 
 
   const result = await registerUser(token, region, opts.signal);
 
-  // Preserve the existing `syncedViaOpencodeAuth` flag if a previous
-  // login wrote one. Without this preservation, a user who did
-  // `opencode auth login` (sets flag=true) and then later ran
-  // `npx opencode-devin-bridge login` (used to omit the flag) would
-  // end up with flag=undefined — subsequent `opencode auth logout`
-  // would no longer mirror-clear our credentials file, leaving a stale
-  // api_key trusted by the proxy auth gate.
-  let existingSynced: boolean | undefined;
-  try {
-    const existing = (await import('./storage.js')).loadCredentials();
-    existingSynced = existing?.syncedViaOpencodeAuth;
-  } catch { /* no prior creds */ }
-
   await saveCredentials({
     apiKey: result.apiKey,
     name: result.name,
@@ -93,7 +80,6 @@ export async function login(opts: LoginOptions = {}): Promise<OAuthLoginResult> 
     redirectUrl: result.redirectUrl,
     issuedAt: new Date().toISOString(),
     oauthClientId: region.oauthClientId,
-    ...(existingSynced !== undefined ? { syncedViaOpencodeAuth: existingSynced } : {}),
   });
 
   return result;
@@ -112,12 +98,12 @@ export async function login(opts: LoginOptions = {}): Promise<OAuthLoginResult> 
  *   2. Builds the sign-in URL with that real port
  *   3. Hands back `{ url, awaitToken }` — `awaitToken` is what opencode calls
  *      after the user finishes in the browser; it waits for the loopback to
- *      fire, exchanges the firebase_id_token via RegisterUser, and persists.
+ *      fire and exchanges the firebase_id_token via RegisterUser.
  */
 export interface PreparedLogin {
   /** Fully-formed sign-in URL with the loopback redirect baked in. */
   url: string;
-  /** Wait for browser callback, exchange token, persist credentials. */
+  /** Wait for the browser callback and exchange its token. */
   awaitToken: () => Promise<OAuthLoginResult>;
   /** Tear down the loopback if the caller bails out. */
   cancel: () => void;
@@ -231,24 +217,7 @@ export async function prepareLogin(opts: LoginOptions = {}): Promise<PreparedLog
         if (!callback.token) {
           throw new Error('OAuth callback delivered an empty token. Re-run sign-in.');
         }
-        const result = await registerUser(callback.token, region, opts.signal);
-        // Preserve syncedViaOpencodeAuth if it already exists — see the
-        // matching comment in login() above for why.
-        let existingSynced: boolean | undefined;
-        try {
-          const existing = (await import('./storage.js')).loadCredentials();
-          existingSynced = existing?.syncedViaOpencodeAuth;
-        } catch { /* no prior creds */ }
-        await saveCredentials({
-          apiKey: result.apiKey,
-          name: result.name,
-          apiServerUrl: result.apiServerUrl,
-          redirectUrl: result.redirectUrl,
-          issuedAt: new Date().toISOString(),
-          oauthClientId: region.oauthClientId,
-          ...(existingSynced !== undefined ? { syncedViaOpencodeAuth: existingSynced } : {}),
-        });
-        return result;
+        return await registerUser(callback.token, region, opts.signal);
       } finally {
         cancel();
       }

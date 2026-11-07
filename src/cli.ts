@@ -245,7 +245,8 @@ export async function cmdSyncModels(
   if (outcome.removed.length > 0) console.log(`Removed : ${outcome.removed.join(', ')}`);
 
   const changed = outcome.added.length > 0 || outcome.removed.length > 0;
-  console.log(changed ? 'Restart opencode to see the updated model list.' : 'Nothing changed.');
+  if (!changed) console.log('Model family list unchanged.');
+  console.log('Run /reload in OpenCode to apply the synced catalog.');
   return 0;
 }
 

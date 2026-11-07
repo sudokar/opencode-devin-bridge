@@ -2,8 +2,6 @@
  * TypeScript type definitions for the Windsurf plugin
  */
 
-import type { PluginInput } from '@opencode-ai/plugin';
-
 /**
  * Chat message source types for protobuf encoding
  */
@@ -160,57 +158,6 @@ export interface CascadeSession {
   /** Message count */
   messageCount: number;
 }
-
-// ============================================================================
-// Plugin Types
-// ============================================================================
-
-/** Plugin initialization context */
-export interface WindsurfPluginContext extends PluginInput {
-  /** Plugin-specific client extensions */
-  client: PluginInput['client'] & {
-    /** TUI methods */
-    tui?: {
-      showToast?: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
-    };
-  };
-}
-
-/** Account loader function signature */
-export type AccountLoader = (
-  getAuth: () => Promise<{ account: WindsurfAccount } | undefined>,
-  provider: string
-) => Promise<{
-  apiKey: string;
-  fetch: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-}>;
-
-/** Plugin result returned by createWindsurfPlugin */
-export interface WindsurfPluginResult {
-  /** Event handler registration */
-  event: (handler: (event: PluginEvent) => void) => void;
-  /** Authentication configuration */
-  auth: {
-    /** Provider identifier */
-    provider: string;
-    /** Account loader */
-    loader: AccountLoader;
-    /** Auth methods */
-    methods: {
-      login: () => Promise<void>;
-      logout: () => Promise<void>;
-      refresh: () => Promise<void>;
-    };
-  };
-}
-
-/** Plugin events */
-export type PluginEvent = 
-  | { type: 'account_added'; account: WindsurfAccount }
-  | { type: 'account_removed'; accountId: string }
-  | { type: 'account_refreshed'; account: WindsurfAccount }
-  | { type: 'rate_limited'; accountId: string; resetAt: number }
-  | { type: 'error'; message: string; accountId?: string };
 
 // ============================================================================
 // Request/Response Types

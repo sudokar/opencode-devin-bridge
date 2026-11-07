@@ -36,15 +36,8 @@ export interface PersistedCredentials extends OAuthLoginResult {
   issuedAt: string;
   /** Optional tag tracking the OAuth client id used (so a future client rotation can invalidate). */
   oauthClientId: string;
-  /**
-   * True when these credentials were written as part of the
-   * `opencode auth login` → authorize() flow (so opencode's auth.json is the
-   * authoritative copy and `opencode auth logout windsurf` should mirror-clear
-   * this file). False / absent for credentials written by our standalone
-    * `opencode-devin-bridge login` CLI; those survive opencode auth state
-   * changes.
-   */
-  syncedViaOpencodeAuth?: boolean;
+  /** Credential was created by the OpenCode V2 integration. */
+  syncedViaOpencodeV2?: boolean;
 }
 
 export interface WindsurfRegion {
