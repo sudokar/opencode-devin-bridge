@@ -14,9 +14,9 @@
 #      equivalent) before any edit.
 #   4. Merges these into your existing config — DOES NOT touch anything
 #      else you already had:
-#        - `"plugin": ["opencode-devin-bridge@beta"]`  (additive)
-#        - `"provider.devin"`  (only if absent; --force overrides)
-#   5. Runs `opencode auth login --provider devin` to sign you in.
+#        - `"plugins": ["opencode-devin-bridge@beta"]`  (additive)
+#        - `"providers.devin"`  (only if absent; --force overrides)
+#   5. Runs `opencode auth login devin` to sign you in.
 #      Skip with `--no-login`.
 #
 # What this script does NOT do (and why):
@@ -68,7 +68,7 @@ Usage:
 
 Options:
   --no-login   Skip the "opencode auth login" step at the end
-  --force      Overwrite an existing provider.devin block (default: keep yours)
+  --force      Overwrite an existing providers.devin block (default: keep yours)
   -h, --help   Show this message and exit
 
 What this does:
@@ -77,9 +77,9 @@ What this does:
   3. Backs up ~/.config/opencode/opencode.json before any edit.
   4. Merges into your existing config (additive — your other settings
      are untouched):
-       - "plugin": ["opencode-devin-bridge@beta"]
-       - "provider.devin"  (only if absent, unless --force)
-  5. Runs "opencode auth login --provider devin" so you can sign in.
+       - "plugins": ["opencode-devin-bridge@beta"]
+       - "providers.devin"  (only if absent, unless --force)
+  5. Runs "opencode auth login devin" so you can sign in.
 
 NO_COLOR=1 disables ANSI color output.
 HELP
@@ -185,6 +185,13 @@ OC_VERSION_RAW="${OC_VERSION_RAW%%$'\n'*}"
 OC_VERSION="$(printf '%s' "$OC_VERSION_RAW" | LC_ALL=C sed $'s/\033\\[[0-9;?]*[a-zA-Z]//g' | tr -dc '[:print:]')" || OC_VERSION=""
 [[ -z "$OC_VERSION" ]] && OC_VERSION="unknown"
 ok "opencode $OC_VERSION"
+if [[ ! "$OC_VERSION" =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+  die "Cannot determine the OpenCode version. This release requires OpenCode 2.2.6 or newer."
+fi
+OC_MAJOR=${BASH_REMATCH[1]}; OC_MINOR=${BASH_REMATCH[2]}; OC_PATCH=${BASH_REMATCH[3]}
+if (( 10#$OC_MAJOR < 2 || (10#$OC_MAJOR == 2 && 10#$OC_MINOR < 2) || (10#$OC_MAJOR == 2 && 10#$OC_MINOR == 2 && 10#$OC_PATCH < 6) )); then
+  die "OpenCode 2.2.6 or newer is required. Install an older bridge release for OpenCode V1."
+fi
 
 # ── 2. Devin CLI preflight ────────────────────────────────────────────
 # JSON output avoids an interactive pager or TTY-specific table output.
@@ -197,7 +204,7 @@ if ! command -v devin >/dev/null 2>&1; then
 Install the Devin CLI, authenticate it with your Devin account, then verify:
   devin models list --format json
 
-This is separate from \`opencode auth login --provider devin\`; the installer
+This is separate from \`opencode auth login devin\`; the installer
 needs the Devin CLI to seed the model catalog available to your account."
 fi
 if ! devin models list --format json >/dev/null 2>&1; then
@@ -302,6 +309,9 @@ in the README instead. Otherwise delete the symlink:
 fi
 if [[ -L "$CONFIG_JSONC" ]]; then
   warn "$CONFIG_JSONC is a symlink. Leaving it alone, but be aware that opencode loads through this symlink — verify it points where you expect."
+fi
+if [[ -f "$CONFIG_JSONC" ]] && grep -q 'opencode-devin-bridge' "$CONFIG_JSONC"; then
+  die "$CONFIG_JSONC mentions opencode-devin-bridge. Remove or migrate that entry manually before using this installer; it cannot safely edit JSONC."
 fi
 
 if [[ ! -f "$CONFIG" ]]; then
@@ -426,53 +436,51 @@ if [[ "$RUNTIME_KIND" == "js" ]]; then
       cur["$schema"] = "https://opencode.ai/config.json";
     }
 
-    // additive: append our plugin only if not already listed. Defensive
-    // normalization: a user might have `"plugin": null` (or a string, or
-    // an object) from a hand-edited config; we coerce to an empty array
-    // so the `.some()` + `.push()` calls below work without crashing.
-    if (!Array.isArray(cur.plugin)) cur.plugin = [];
+    // Move only our V1 entry; preserve every unrelated plugin and option.
+    if (cur.plugins !== undefined && !Array.isArray(cur.plugins)) throw new Error("plugins must be an array");
+    if (cur.plugin !== undefined && !Array.isArray(cur.plugin)) throw new Error("plugin must be an array");
+    if (!cur.plugins) cur.plugins = [];
     const PLUGIN = "opencode-devin-bridge@beta";
-    // `@[^/]*$` strips ONLY a trailing `@version` suffix; `@.*$` would
-    // greedily consume the leading `@` of any hypothetical future scoped
-    // form like `@cognition/opencode-devin-bridge`, collapsing to ""
-    // and breaking dedup. We do not currently publish under a scope,
-    // but this is cheap defense for when we might.
-    if (!cur.plugin.some((p) => typeof p === "string" && p.replace(/@[^/]*$/, "") === "opencode-devin-bridge")) {
-      cur.plugin.push(PLUGIN);
+    const isBridge = (p) => {
+      const name = typeof p === "string" ? p : Array.isArray(p) ? p[0] : p?.package;
+      return typeof name === "string" && name.replace(/@[^/]*$/, "") === "opencode-devin-bridge";
+    };
+    if (!cur.plugins.some(isBridge)) {
+      const legacy = Array.isArray(cur.plugin) ? cur.plugin.find(isBridge) : undefined;
+      cur.plugins.push(Array.isArray(legacy) ? { package: legacy[0], options: legacy[1] } : legacy || PLUGIN);
     }
+    cur.plugins = cur.plugins.map((p) => {
+      const name = typeof p === "string" ? p : p?.package;
+      if (typeof name !== "string" || !name.startsWith("opencode-devin-bridge@")) return p;
+      const spec = name.slice("opencode-devin-bridge@".length);
+      if (!/(^|[\s^~=<>v|])1(?=[.\-x*\s|]|$)/.test(spec) && !/<=?\s*2(?!\d)/.test(spec)) return p;
+      console.error("  (upgraded V1 bridge pin to " + PLUGIN + ")");
+      return typeof p === "string" ? PLUGIN : { ...p, package: PLUGIN };
+    });
+    if (Array.isArray(cur.plugin)) cur.plugin = cur.plugin.filter((p) => !isBridge(p));
 
-    // provider.devin — only write if absent (or --force given). The model
-    // list is NOT written here: the plugin advertises models to opencode
-    // itself, read from the persisted catalog (`opencode-devin-bridge
-    // sync-models`), so a static list here would immediately go stale.
-    // Defensive normalization: `cur.provider || {}` would leave a truthy
-    // primitive (e.g. string) intact, and `cur.provider.devin = ...`
-    // would silently no-op on a non-object in non-strict mode. Coerce
-    // to a plain object first. Also treat `devin: null` (or any
-    // non-object devin value) as ABSENT so we replace the broken
-    // entry rather than confusingly preserve it.
-    if (!cur.provider || typeof cur.provider !== "object" || Array.isArray(cur.provider)) {
-      cur.provider = {};
-    }
-    const existingDevin = cur.provider.devin;
+    // Keep an existing native or legacy provider; the plugin supplies models.
+    if (cur.providers !== undefined && (!cur.providers || typeof cur.providers !== "object" || Array.isArray(cur.providers))) throw new Error("providers must be an object");
+    if (!cur.providers) cur.providers = {};
+    const existingDevin = Object.prototype.hasOwnProperty.call(cur.providers, "devin") ? cur.providers.devin : cur.provider?.devin;
     const has = existingDevin && typeof existingDevin === "object" && !Array.isArray(existingDevin);
     // `had` distinguishes "devin was present but malformed (null,
     // array, primitive)" from "devin was truly absent" — only
     // matters for the log message wording at the bottom of this branch.
     const had = existingDevin !== undefined;
     if (!has || force) {
-      cur.provider.devin = {
+      cur.providers.devin = {
         name: "Devin",
-        npm: "@ai-sdk/openai-compatible",
-        options: { baseURL: "http://127.0.0.1:42124/v1" },
+        package: "@opencode/ai/providers/openai-compatible",
+        settings: { baseURL: "http://127.0.0.1:42124/v1" },
       };
       console.error(
-        has  ? "  (--force: overwrote existing provider.devin)" :
-        had  ? "  (replaced malformed provider.devin — was not a valid object)" :
-               "  (added provider.devin)"
+        has  ? "  (--force: overwrote existing providers.devin)" :
+        had  ? "  (replaced malformed providers.devin — was not a valid object)" :
+               "  (added providers.devin)"
       );
     } else {
-      console.error("  (kept your existing provider.devin — re-run with --force to replace)");
+      console.error("  (kept your existing Devin provider — re-run with --force to replace)");
     }
 
     // Atomic write: serialize to a sibling tmp file, then rename. fs.rename
@@ -555,44 +563,52 @@ if not isinstance(cur, dict):
 if not isinstance(cur.get("$schema"), str) or not cur["$schema"]:
     cur["$schema"] = "https://opencode.ai/config.json"
 
-# Defensive normalization: setdefault only inserts when the key is MISSING.
-# A user with `"plugin": null` (or a string, or anything non-list) would
-# slip past setdefault and crash on the subsequent .append() / iteration.
-# Coerce to a list explicitly. Same for provider (must be a dict).
-if not isinstance(cur.get("plugin"), list):
-    cur["plugin"] = []
-# Use `@[^/]*$` (matches JS branch): strips ONLY trailing @version, not
-# a scope-prefixing @ inside e.g. @scope/opencode-devin-bridge.
-if not any(isinstance(p, str) and re.sub(r"@[^/]*$", "", p) == "opencode-devin-bridge" for p in cur["plugin"]):
-    cur["plugin"].append("opencode-devin-bridge@beta")
+if "plugins" in cur and not isinstance(cur["plugins"], list):
+    raise ValueError("plugins must be an array")
+if "plugin" in cur and not isinstance(cur["plugin"], list):
+    raise ValueError("plugin must be an array")
+cur.setdefault("plugins", [])
+def is_bridge(p):
+    name = p if isinstance(p, str) else p[0] if isinstance(p, list) and p else p.get("package") if isinstance(p, dict) else None
+    return isinstance(name, str) and re.sub(r"@[^/]*$", "", name) == "opencode-devin-bridge"
+if not any(is_bridge(p) for p in cur["plugins"]):
+    legacy = next((p for p in cur.get("plugin", []) if is_bridge(p)), None)
+    cur["plugins"].append({"package": legacy[0], "options": legacy[1]} if isinstance(legacy, list) else legacy or "opencode-devin-bridge@beta")
+for i, p in enumerate(cur["plugins"]):
+    name = p if isinstance(p, str) else p.get("package") if isinstance(p, dict) else None
+    spec = name[len("opencode-devin-bridge@"):] if isinstance(name, str) and name.startswith("opencode-devin-bridge@") else None
+    if spec is not None and (re.search(r"(^|[\s^~=<>v|])1(?=[.\-x*\s|]|$)", spec) or re.search(r"<=?\s*2(?!\d)", spec)):
+        print("  (upgraded V1 bridge pin to opencode-devin-bridge@beta)", file=sys.stderr)
+        cur["plugins"][i] = "opencode-devin-bridge@beta" if isinstance(p, str) else {**p, "package": "opencode-devin-bridge@beta"}
+if "plugin" in cur:
+    cur["plugin"] = [p for p in cur["plugin"] if not is_bridge(p)]
 
-if not isinstance(cur.get("provider"), dict):
-    cur["provider"] = {}
-# provider.devin — only write if absent (or --force given). The model list
-# is NOT written here: the plugin advertises models to opencode itself,
-# read from the persisted catalog (`opencode-devin-bridge sync-models`), so
-# a static list here would immediately go stale.
+if "providers" in cur and not isinstance(cur["providers"], dict):
+    raise ValueError("providers must be an object")
+cur.setdefault("providers", {})
+# Keep an existing native or legacy provider; the plugin supplies models.
 # Treat devin: None (or any non-dict value) as ABSENT so we replace
 # the broken entry rather than confusingly preserve it.
-existing_devin = cur["provider"].get("devin")
+legacy_provider = cur.get("provider") if isinstance(cur.get("provider"), dict) else {}
+existing_devin = cur["providers"].get("devin", legacy_provider.get("devin"))
 has = isinstance(existing_devin, dict)
 # `had` distinguishes "devin was present but malformed" from "absent"
 # — only matters for the log message wording.
-had = "devin" in cur["provider"]
+had = "devin" in cur["providers"] or "devin" in legacy_provider
 if (not has) or force:
-    cur["provider"]["devin"] = {
+    cur["providers"]["devin"] = {
         "name": "Devin",
-        "npm": "@ai-sdk/openai-compatible",
-        "options": {"baseURL": "http://127.0.0.1:42124/v1"},
+        "package": "@opencode/ai/providers/openai-compatible",
+        "settings": {"baseURL": "http://127.0.0.1:42124/v1"},
     }
     if has:
-        print("  (--force: overwrote existing provider.devin)", file=sys.stderr)
+        print("  (--force: overwrote existing providers.devin)", file=sys.stderr)
     elif had:
-        print("  (replaced malformed provider.devin — was not a valid object)", file=sys.stderr)
+        print("  (replaced malformed providers.devin — was not a valid object)", file=sys.stderr)
     else:
-        print("  (added provider.devin)", file=sys.stderr)
+        print("  (added providers.devin)", file=sys.stderr)
 else:
-    print("  (kept your existing provider.devin — re-run with --force to replace)", file=sys.stderr)
+    print("  (kept your existing Devin provider — re-run with --force to replace)", file=sys.stderr)
 
 # Atomic write: serialize to a tmp file then `os.replace` (atomic rename
 # on POSIX). See the JS branch for the same pattern + rationale.
@@ -659,27 +675,19 @@ if (( LOGIN )); then
   log "Launching opencode auth login..."
   log "A browser tab will open. Sign in with your Devin account."
   echo
-  # --provider skips the picker and goes straight to our oauth flow
-  if opencode auth login --provider devin; then
+  if opencode auth login devin; then
     ok "signed in"
-    # auth login makes opencode resolve the configured plugin into its package
-    # cache. Run its package-manager-generated executable shim directly; never
-    # invoke npm/npx here because a registry lookup for a beta package can fail
-    # after sign-in.
-    BRIDGE_BIN="${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/opencode-devin-bridge@beta/node_modules/.bin/opencode-devin-bridge"
-    if [[ -x "$BRIDGE_BIN" ]]; then
-      log "Refreshing your Devin model catalog..."
-      if "$BRIDGE_BIN" sync-models; then
-        ok "model catalog refreshed"
-      else
-        warn "could not refresh the model catalog; run \`opencode-devin-bridge sync-models\` after authenticating the Devin CLI"
-      fi
-    else
-      warn "the installed opencode-devin-bridge CLI executable was not found in opencode's cache; model catalog refresh was skipped"
-    fi
   else
-    warn "auth login didn't complete cleanly — you can re-run \`opencode auth login --provider devin\` any time"
+    warn "auth login didn't complete cleanly — you can re-run \`opencode auth login devin\` any time"
   fi
+fi
+log "Refreshing your Devin model catalog..."
+if command -v bunx >/dev/null 2>&1; then
+  if bunx opencode-devin-bridge@beta sync-models; then ok "model catalog refreshed"; else warn "model catalog refresh failed"; fi
+elif command -v npx >/dev/null 2>&1; then
+  if npx --yes opencode-devin-bridge@beta sync-models; then ok "model catalog refreshed"; else warn "model catalog refresh failed"; fi
+else
+  warn "bunx or npx not found; run opencode-devin-bridge sync-models after installing the bridge CLI"
 fi
 
 # ── 8. done ──────────────────────────────────────────────────────────
@@ -698,7 +706,7 @@ printf '\n%s🎉  Installation complete.%s\n\n' "$GREEN" "$RESET"
 printf '%sTry it:%s\n'   "$BLUE"  "$RESET"
 printf '  opencode run --model=devin/swe-1.6 "hi"\n'
 printf '  opencode run --model=devin/kimi-k2.6 -f screenshot.png -- "describe this image"\n'
-printf '  opencode run --model=devin/claude-opus-4.7:high "what does this codebase do?"\n\n'
+printf '  opencode run --model=devin/claude-opus-4.7#high "what does this codebase do?"\n\n'
 printf '%sAnything broken?%s\n' "$BLUE"  "$RESET"
 printf '  • Restore your previous config:  cp %s %s\n' "$RESTORE_BACKUP_Q" "$RESTORE_CONFIG_Q"
 printf '  • Open an issue:  https://github.com/sudokar/opencode-devin-bridge/issues\n\n'

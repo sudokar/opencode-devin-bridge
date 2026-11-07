@@ -32,7 +32,7 @@ function captureConsole(): { logs: string[]; errors: string[]; restore: () => vo
 }
 
 describe('cmdSyncModels', () => {
-  test('reports additions and asks for a restart when the model set changed', async () => {
+  test('reports additions and asks for a reload when the model set changed', async () => {
     const outcome: RefreshOutcome = { ok: true, added: ['gamma'], removed: ['beta'], total: 2 };
     const capture = captureConsole();
     try {
@@ -41,21 +41,21 @@ describe('cmdSyncModels', () => {
       expect(capture.logs.join('\n')).toContain('gamma');
       expect(capture.logs.join('\n')).toContain('beta');
       expect(capture.logs.join('\n')).toContain('2');
-      expect(capture.logs.join('\n').toLowerCase()).toContain('restart');
+      expect(capture.logs.join('\n').toLowerCase()).toContain('/reload');
     } finally {
       capture.restore();
     }
   });
 
-  test('reports nothing changed and does not ask for a restart when the model set is unchanged', async () => {
+  test('asks for a reload even when only variants or metadata may have changed', async () => {
     const outcome: RefreshOutcome = { ok: true, added: [], removed: [], total: 5 };
     const capture = captureConsole();
     try {
       const code = await cmdSyncModels(async () => outcome);
       expect(code).toBe(0);
       const combined = capture.logs.join('\n').toLowerCase();
-      expect(combined).toContain('nothing changed');
-      expect(combined).not.toContain('restart');
+      expect(combined).toContain('model family list unchanged');
+      expect(combined).toContain('/reload');
     } finally {
       capture.restore();
     }

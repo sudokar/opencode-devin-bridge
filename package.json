@@ -1,6 +1,6 @@
 {
   "name": "opencode-devin-bridge",
-  "version": "1.0.0-beta",
+  "version": "2.0.0-beta.0",
   "description": "OpenCode bridge for Devin models",
   "repository": {
     "type": "git",
@@ -46,10 +46,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@opencode/plugin": "^2.2.6",
     "xdg-basedir": "^5.1.0"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.18.30",
     "@types/bun": "^1.4.2",
     "@types/node": "^25.0.8",
     "typescript": "^7.0.2"

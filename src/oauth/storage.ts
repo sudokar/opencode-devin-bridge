@@ -77,6 +77,29 @@ export async function saveCredentials(creds: PersistedCredentials): Promise<void
   });
 }
 
+/** Update or remove credentials while checking their current owner under the same lock. */
+export async function updateCredentials(
+  update: (current: PersistedCredentials | null) => PersistedCredentials | null | undefined,
+): Promise<boolean> {
+  loadCredentials(); // Migrate any legacy state before acquiring the lock.
+  ensureDir();
+  const p = getCredentialsPath();
+  return withFileLock(path.join(getCredentialsDir(), LOCK_FILENAME), () => {
+    const current = fs.existsSync(p) ? readCredentials(p) : null;
+    const next = update(current);
+    if (next === undefined) return false;
+    if (next) writeFileAtomically(p, JSON.stringify(next, null, 2), 0o600);
+    else {
+      for (const credentialsPath of [p, getLegacyCredentialsPath()]) {
+        try { fs.unlinkSync(credentialsPath); } catch (err) {
+          if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+        }
+      }
+    }
+    return true;
+  });
+}
+
 /**
  * Read persisted credentials. Returns null if none exist; throws if the file
  * exists but is malformed (we don't want to silently fall back to "no auth"

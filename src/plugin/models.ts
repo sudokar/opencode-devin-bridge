@@ -55,9 +55,11 @@ function getCatalog(): Catalog | null {
  * test (via `XDG_CONFIG_HOME`) and need the per-process memo cleared
  * between them so each test observes its own catalog.
  */
-export function __resetCatalogCacheForTests(): void {
+export function clearCatalogCache(): void {
   cachedCatalog = undefined;
 }
+
+export const __resetCatalogCacheForTests = clearCatalogCache;
 
 function buildFamilyLookup(catalog: Catalog): Map<string, CatalogFamily> {
   const lookup = new Map<string, CatalogFamily>();

@@ -110,6 +110,11 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Test packaged plugin with OpenCode V2
+        run: |
+          npm install -g @opencode/cli@2.2.6
+          RUN_PACKED_V2=1 bun test tests/integration/packed-v2.test.ts
+
       - name: Publish to npm (beta via OIDC)
         if: ${{ inputs.dry_run != true }}
         # `npm publish --tag beta` atomically sets the `beta` dist-tag using
