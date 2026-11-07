@@ -112,7 +112,8 @@ jobs:
 
       - name: Test packaged plugin with OpenCode V2
         run: |
-          npm install -g @opencode/cli@2.2.5
+          npm install -g --allow-scripts=@opencode/cli @opencode/cli@2.2.5
+          opencode --version
           RUN_PACKED_V2=1 bun test tests/integration/packed-v2.test.ts
 
       - name: Publish to npm (beta via OIDC)
